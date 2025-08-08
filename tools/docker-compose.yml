@@ -1,0 +1,10 @@
+version: '3.9'
+services:
+
+  wiremock:
+    image: wiremock/wiremock:3.9.1
+    command: ["--verbose","--global-response-templating"]
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings
+      - ./wiremock/__files:/home/wiremock/__files
+    ports: ["8089:8080"]

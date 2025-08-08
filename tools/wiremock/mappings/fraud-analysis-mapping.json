@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/v1/fraud_analysis",
+    "queryParameters": {
+      "orderId": {
+        "matches": ".*"
+      },
+      "customerId": {
+        "matches": ".*"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "fraud-analysis-body.json",
+    "transformers": ["response-template"]
+  }
+}
