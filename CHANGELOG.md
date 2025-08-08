@@ -38,3 +38,5 @@ Versão inicial do microsserviço de solicitações de apólice, contemplando co
 ### Notas
 - A implementação atual retorna dados mockados.
 - As anotações `@JsonProperty` garantem o mapeamento correto em snake_case conforme o contrato da API.
+- Foram realizadas chamadas de teste no Insomnia para validar o comportamento das três rotas implementadas (`POST /policies`, `GET /policies/{id}`, `GET /policies?customerId=`).
+

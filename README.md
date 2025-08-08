@@ -65,6 +65,45 @@ mvn test
 
 2. (Opcional) Se o projeto possui testes de integração, explique como executá-los.
 
+### Testes Manuais com Insomnia
+
+As três rotas implementadas nesta versão foram validadas manualmente utilizando o Insomnia.
+
+Endpoints testados:
+1. Criar solicitação
+- Método: POST
+- URL: http://localhost:8080/policies
+- Body (JSON):
+```bash
+{
+	"customer_id": "adc56d77-348c-4bf0-908f-22d40e2e715c",
+	"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
+	"category": "AUTO",
+	"salesChannel": "MOBILE",
+	"paymentMethod": "CREDIT_CARD",
+	"total_monthly_premium_amount": 75.25,
+	"insured_amount": 275000.50,
+	"coverages": {
+		"Roubo": 100000.25,
+		"Perda Total": 100000.25,
+		"Colisão com Terceiros": 75000.00
+	},
+	"assistances": [
+		"Guincho até 250km",
+		"Troca de Óleo",
+		"Chaveiro 24h"
+	]
+}
+```
+
+2. Consultar por ID
+- Método: GET
+- URL: http://localhost:8080/policies/{id}
+
+3. Consultar por Customer ID
+- Método: GET
+- URL: http://localhost:8080/policies?customerId={uuid}
+
 ### Contribuindo
 Se você deseja contribuir para este projeto, siga as etapas abaixo:
 
