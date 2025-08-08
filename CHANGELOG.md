@@ -8,8 +8,8 @@ Versão inicial do microsserviço de solicitações de apólice, contemplando co
 - Java 17.
 - Spring Boot 3.5.4.
 - Maven.
-- Jackson.
-- Jakarta.
+- Jackson para serialização/deserialização JSON.
+- Jakarta Validation para validação de dados de entrada.
 - Estrutura de pacotes alinhada ao Clean Architecture.
 
 ### Aprendizados
@@ -27,7 +27,6 @@ Versão inicial do microsserviço de solicitações de apólice, contemplando co
     - `POST /policies` – criação de nova solicitação de apólice.
     - `GET /policies/{id}` – consulta por ID.
     - `GET /policies?customerId=` – consulta por ID de cliente.
-- Configuração base do projeto com Spring Boot 3.5.4, Java 17 e Maven.
 - Conversão do arquivo de configuração de `application.properties` para `application.yml` e inclusão do `server.port` padrão.
 
 ### Alterado
