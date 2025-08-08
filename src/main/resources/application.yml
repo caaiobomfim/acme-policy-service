@@ -3,3 +3,17 @@ server:
 spring:
   application:
     name: policy-service
+policy:
+  fraud:
+    base-url: http://localhost:8089/v1
+feign:
+  client:
+    config:
+      fraudClient:
+        connectTimeout: 3000
+        readTimeout: 5000
+        loggerLevel: basic
+logging:
+  level:
+    com.acme.insurance.policy.infra.fraud: DEBUG
+    feign: INFO
