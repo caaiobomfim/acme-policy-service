@@ -4,15 +4,20 @@ Este repositório contém o código do projeto desenvolvido para o desafio **Seg
 
 O objetivo deste desafio é criar um **microsserviço orientado a eventos** para gerenciar **solicitações de apólice de seguros**, integrando com **API de Fraudes**, aplicando **regras de negócio** e publicando **eventos de mudanças de estado**.
 
-## Tecnologias Utilizadas
-
-- **Java** - Linguagem de programação utilizada para o desenvolvimento do projeto.
-- **Spring Boot** - Framework utilizado para construção da aplicação.
-- **Feign** - Cliente HTTP para integração com APIs externas.
+## Tecnologias, Frameworks, Bibliotecas e Padrões Utilizados
+- **Java 17**
+- **Spring Boot 3.5.4**
+- **Spring Cloud OpenFeign** – Integração com APIs externas.
+- **WireMock** – Simulação de API de Fraudes com stubs e arquivos em `__files`.
+- **Jackson** – Serialização/deserialização JSON.
+- **Clean Architecture** – Organização de pacotes e separação de responsabilidades.
+- **Maven** – Gerenciamento de dependências e build.
 
 ## Funcionalidades
-
-...
+- Criar solicitação de apólice (`POST /policies`)
+- Consultar apólice por ID (`GET /policies/{id}`)
+- Consultar apólices por Customer ID (`GET /policies?customerId=...`)
+- Realizar análise de fraude durante a criação da apólice (simulada com WireMock)
 
 ## Estrutura do Projeto
 
@@ -28,32 +33,33 @@ Para rodar a aplicação localmente, siga os seguintes passos:
 
 ### Requisitos
 
-- **Java 11 ou superior** - Certifique-se de que o Java está instalado em sua máquina.
-- **Maven ou Gradle** - Ferramentas de gerenciamento de dependências e build.
+- **Java 17** - Certifique-se de que o Java está instalado em sua máquina.
+- **Maven** - Ferramentas de gerenciamento de dependências e build.
 
 ### Passos
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/usuario/repo.git
+git clone https://github.com/caaiobomfim/acme-policy-service.git
 ```
 
 2. Navegue até o diretório do projeto:
 ```bash
-cd desafio
+cd acme-policy-service
 ```
 
-3. Compile o projeto com o Maven:
+3. Suba o ambiente de mock de fraudes:
+```bash
+docker compose up -d wiremock
+```
+
+4. Compile e execute o projeto:
 ```bash
 mvn clean install
-```
-
-4. Execute a aplicação:
-```bash
 mvn spring-boot:run
 ```
 
-A aplicação estará rodando localmente no `http://localhost:8080`.
+A aplicação estará disponível em `http://localhost:8080` e o mock de fraudes em `http://localhost:8089/v1/fraud_analysis`.
 
 ### Como Testar
 Descreva como rodar os testes do projeto.
@@ -70,7 +76,7 @@ mvn test
 As três rotas implementadas nesta versão foram validadas manualmente utilizando o Insomnia.
 
 Endpoints testados:
-1. Criar solicitação
+1. Criar solicitação (`POST /policies`)
 - Método: POST
 - URL: http://localhost:8080/policies
 - Body (JSON):
@@ -96,45 +102,16 @@ Endpoints testados:
 }
 ```
 
-2. Consultar por ID
+2. Consultar por ID (`GET /policies/{id}`)
 - Método: GET
 - URL: http://localhost:8080/policies/{id}
 
-3. Consultar por Customer ID
+3. Consultar por Customer ID (`GET /policies?customerId=`)
 - Método: GET
 - URL: http://localhost:8080/policies?customerId={uuid}
 
-### Contribuindo
-Se você deseja contribuir para este projeto, siga as etapas abaixo:
+#### Fraud API (mockada)
+- `GET /v1/fraud_analysis?orderId=123&customerId=456`
 
-1. Fork este repositório.
-2. Crie uma branch para sua modificação:
-```bash
-git checkout -b minha-modificacao
-```
-3. Faça as alterações necessárias.
-4. Commit e push:
-```bash
-git commit -am "Descrição das alterações"
-git push origin minha-modificacao
-```
-5. Abra um Pull Request.
-
-### Licença
-Este projeto está sob a licença [nome da licença]. Veja o arquivo LICENSE para mais informações.
-
-### Contato
-Se tiver dúvidas ou sugestões, entre em contato:
-- **E-mail**: [seu-email@dominio.com]
-- **LinkedIn**: [seu-linkedin]
-
-### Explicações de Seções:
-- **Objetivo do Desafio**: Aqui você pode explicar rapidamente o que é o projeto e o que ele pretende resolver ou alcançar.
-- **Tecnologias Utilizadas**: Liste as tecnologias que você utilizou no projeto.
-- **Funcionalidades**: Descreva brevemente as funcionalidades que a aplicação oferece.
-- **Estrutura do Projeto**: Mostre a estrutura do projeto para facilitar a navegação.
-- **Como Rodar o Projeto**: Explicação detalhada sobre como configurar e rodar o projeto localmente.
-- **Como Testar**: Mostre como os testes são executados (unitários, integração, etc.).
-- **Contribuindo**: Se você deseja permitir contribuições, inclua o processo para isso.
-- **Licença**: Especifique a licença do projeto (se houver).
-- **Contato**: Ofereça formas de entrar em contato.
+### Histórico de mudanças
+Consulte o arquivo [CHANGELOG.md](./CHANGELOG.md) para ver as alterações de cada versão.
