@@ -1,4 +1,4 @@
-package com.acme.insurance.policy_service;
+package com.acme.insurance.policy;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
