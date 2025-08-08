@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.2.0] - 2025-08-08
+### Visão Geral
+Implementação da integração com a **API de Fraudes** para análise de risco durante a criação de solicitações de apólice, utilizando **OpenFeign** e mock de resposta com **WireMock** para testes locais.
+
+### Stack Técnico e Padrões
+- OpenFeign para consumo de API externa.
+- WireMock com `mappings` e `__files` para simulação de respostas da API de Fraudes.
+- Resposta dinâmica usando **Response Template** no WireMock.
+- Propriedades customizadas no `application.yml` para configuração de URL e timeouts da integração.
+
+### Aprendizados
+- Configuração e uso de **Feign Clients** com interceptors customizados.
+- Parametrização de timeouts de conexão e leitura via `application.yml`.
+- Organização de stubs WireMock com `bodyFileName` e arquivos JSON no diretório `__files`.
+- Boas práticas para desacoplamento usando **Portas e Adaptadores (Hexagonal Architecture)**.
+
+### Adicionado
+- DTO `FraudAnalysisResponse` e record `Occurrence` para mapear a resposta da API de Fraudes.
+- Interface `FraudGateway` para abstração da integração.
+- Implementação `FraudGatewayFeignAdapter` usando Feign Client.
+- Configuração `FraudFeignConfig` com interceptors e logger level customizado.
+- Arquivo `wiremock/mappings/fraud-analysis.json` e `wiremock/__files/fraud-analysis-body.json` para simulação de resposta mockada.
+
+### Alterado
+- Atualização do `application.yml` para incluir propriedades de `policy.fraud.base-url`, `connectTimeout` e `readTimeout`.
+- Ajustes na camada de serviço para invocar a API de Fraudes durante a criação de apólices.
+
+### Removido
+- Não houve remoções nesta versão.
+
+### Notas
+- Atualmente, a integração utiliza dados mockados pelo WireMock.
+
 ## [0.1.0] - 2025-08-07
 ### Visão Geral
 Versão inicial do microsserviço de solicitações de apólice, contemplando configuração base, endpoints de criação e consulta, e estrutura inicial de camadas.
