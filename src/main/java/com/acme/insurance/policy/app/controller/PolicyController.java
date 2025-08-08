@@ -1,6 +1,6 @@
 package com.acme.insurance.policy.app.controller;
 
-import com.acme.insurance.policy.domain.ports.PolicyService;
+import com.acme.insurance.policy.domain.ports.in.PolicyService;
 import com.acme.insurance.policy.app.dto.PolicyRequestDto;
 import com.acme.insurance.policy.app.dto.PolicyResponseDto;
 import jakarta.validation.Valid;
