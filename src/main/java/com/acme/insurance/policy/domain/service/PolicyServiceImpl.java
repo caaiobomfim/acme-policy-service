@@ -4,15 +4,23 @@ import com.acme.insurance.policy.app.dto.PolicyRequestDto;
 import com.acme.insurance.policy.app.dto.PolicyResponseDto;
 import com.acme.insurance.policy.app.dto.fraud.FraudAnalysisResponse;
 import com.acme.insurance.policy.app.mapper.ApiPolicyMapper;
+import com.acme.insurance.policy.domain.events.PolicyRequestCreatedEvent;
+import com.acme.insurance.policy.domain.events.PolicyRequestStatusChangedEvent;
+import com.acme.insurance.policy.domain.fraud.FraudClassification;
+import com.acme.insurance.policy.domain.fraud.FraudRules;
 import com.acme.insurance.policy.domain.model.Policy;
 import com.acme.insurance.policy.domain.ports.in.PolicyService;
 import com.acme.insurance.policy.domain.ports.out.FraudGateway;
 import com.acme.insurance.policy.infra.dynamodb.PolicyDynamoRepository;
 import com.acme.insurance.policy.infra.dynamodb.mapper.PolicyItemMapper;
+import com.acme.insurance.policy.infra.messaging.PolicyRequestPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,15 +31,18 @@ public class PolicyServiceImpl implements PolicyService {
     private final PolicyDynamoRepository policyDynamoRepository;
     private final ApiPolicyMapper apiPolicyMapper;
     private final PolicyItemMapper policyItemMapper;
+    private final PolicyRequestPublisher policyRequestPublisher;
 
     public PolicyServiceImpl(FraudGateway fraudGateway,
                              PolicyDynamoRepository policyDynamoRepository,
                              ApiPolicyMapper apiPolicyMapper,
-                             PolicyItemMapper policyItemMapper) {
+                             PolicyItemMapper policyItemMapper,
+                             PolicyRequestPublisher policyRequestPublisher) {
         this.fraudGateway = fraudGateway;
         this.policyDynamoRepository = policyDynamoRepository;
         this.apiPolicyMapper = apiPolicyMapper;
         this.policyItemMapper = policyItemMapper;
+        this.policyRequestPublisher = policyRequestPublisher;
     }
 
     @Override
@@ -60,7 +71,58 @@ public class PolicyServiceImpl implements PolicyService {
 
         policyDynamoRepository.save(policyItemMapper.toItem(policy));
 
-        FraudAnalysisResponse fraud = fraudGateway.analyze(UUID.randomUUID(), request.customerId());
+        policyRequestPublisher.publish(new PolicyRequestCreatedEvent(
+                policy.id(),
+                policy.customerId(),
+                policy.productId(),
+                "RECEIVED",
+                Instant.now()
+        ));
+
+        FraudAnalysisResponse fraud = fraudGateway.analyze(policy.id(), policy.customerId());
+
+        FraudClassification classification = FraudClassification.from(fraud.classification());
+
+        boolean approved = FraudRules.isApproved(classification, policy.category(), policy.insuredAmount());
+
+        if (approved) {
+            var validatedAt = OffsetDateTime.now(ZoneOffset.UTC);
+            policy = policy.withStatusAndHistory("VALIDATED", validatedAt);
+            policyDynamoRepository.save(policyItemMapper.toItem(policy));
+            policyRequestPublisher.publish(new PolicyRequestStatusChangedEvent(
+                    policy.id(),
+                    policy.customerId(),
+                    policy.productId(),
+                    policy.status(),
+                    classification.name(),
+                    validatedAt.toInstant()
+            ));
+
+            var pendingAt = OffsetDateTime.now(ZoneOffset.UTC);
+            policy = policy.withStatusAndHistory("PENDING", pendingAt);
+            policyDynamoRepository.save(policyItemMapper.toItem(policy));
+            policyRequestPublisher.publish(new PolicyRequestStatusChangedEvent(
+                    policy.id(),
+                    policy.customerId(),
+                    policy.productId(),
+                    policy.status(),
+                    classification.name(),
+                    pendingAt.toInstant()
+            ));
+
+        } else {
+            var rejectedAt = OffsetDateTime.now(ZoneOffset.UTC);
+            policy = policy.withStatusAndHistory("REJECTED", rejectedAt);
+            policyDynamoRepository.save(policyItemMapper.toItem(policy));
+            policyRequestPublisher.publish(new PolicyRequestStatusChangedEvent(
+                    policy.id(),
+                    policy.customerId(),
+                    policy.productId(),
+                    policy.status(),
+                    classification.name(),
+                    rejectedAt.toInstant()
+            ));
+        }
 
         return apiPolicyMapper.toResponse(policy);
     }
