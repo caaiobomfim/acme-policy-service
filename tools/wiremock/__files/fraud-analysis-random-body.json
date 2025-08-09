@@ -1,0 +1,7 @@
+{
+  "orderId": "{{request.query.orderId}}",
+  "customerId": "{{request.query.customerId}}",
+  "analyzedAt": "{{now}}",
+  "classification": "{{pickRandom 'REGULAR' 'HIGH_RISK' 'PREFERENTIAL' 'NO_INFO'}}",
+  "occurrences": []
+}

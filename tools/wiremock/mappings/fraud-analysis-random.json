@@ -16,7 +16,7 @@
     "headers": {
       "Content-Type": "application/json"
     },
-    "bodyFileName": "fraud-analysis-body.json",
+    "bodyFileName": "fraud-analysis-random-body.json",
     "transformers": ["response-template"]
   }
 }
