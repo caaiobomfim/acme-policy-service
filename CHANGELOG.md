@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.4.0] - 2025-08-09
+### Visão Geral
+Nesta release, o microsserviço passou a publicar eventos de solicitações de apólice em uma fila **Amazon SQS** após a persistência no **DynamoDB**, simulando o fluxo assíncrono de integração entre sistemas.
+Também foi implementada a aplicação de regras de negócio com base na **classificação de risco** retornada pela API de Fraudes, ajustando o status da apólice e registrando o histórico de alterações.
+
+### Stack Técnico e Padrões
+- **AWS SDK v2 + Spring Cloud AWS** para integração com o SQS.
+- **LocalStack** para emulação local do SQS.
+- **Publisher dedicado** (`PolicyRequestPublisher`) para envio de mensagens.
+- **Domain Events** (`PolicyRequestCreatedEvent`, `PolicyRequestStatusChangedEvent`) para representar mudanças de estado no domínio.
+- Aplicação de **regras de negócio** via `FraudRules` e `FraudClassification`.
+- Uso consistente de **OffsetDateTime UTC** para garantir coerência temporal em persistência e publicação.
+
+### Aprendizados
+- Integração assíncrona com SQS utilizando `SqsTemplate` e boas práticas de isolamento em adapters.
+- Controle de estado de domínio e histórico utilizando métodos imutáveis (`withStatusAndHistory`) no agregado `Policy`.
+- Estratégias para manter timestamps consistentes entre persistência no DynamoDB e publicação de eventos.
+- Simulação de cenários de classificação de fraude via WireMock com respostas dinâmicas.
+
+### Adicionado
+- Integração com **Amazon SQS** para publicação de eventos de criação e mudança de status de solicitações.
+- Implementação de `PolicyRequestPublisher` com métodos para publicar `PolicyRequestCreatedEvent` e `PolicyRequestStatusChangedEvent`.
+- Regras de aprovação/reprovação com base na classificação de risco (`FraudClassification`) e categoria/valor da apólice (`FraudRules`).
+- Ajuste do fluxo no `PolicyServiceImpl` para:
+  - Persistir a apólice no DynamoDB.
+  - Publicar evento de criação no SQS.
+  - Consultar a **API de Fraudes**.
+  - Alterar o status para `VALIDATED`/`PENDING` ou `REJECTED` conforme regra.
+  - Publicar eventos de mudança de status no SQS.
+
+### Alterado
+- Atualização do `docker-compose.yml` para incluir o serviço do **LocalStack** com suporte ao SQS.
+- Ajustes no `application.yml` para configurar propriedades de AWS e endpoint do SQS.
+- Adequação da integração com API de Fraudes para permitir simulação de múltiplas classificações.
+
+### Notas
+- Todo o fluxo de persistência e publicação pode ser testado localmente com **LocalStack** e **WireMock**.
+- A fila utilizada (`orders-topic`) é não-FIFO e configurada no ambiente local.
+- Os timestamps de status e eventos são mantidos em UTC para evitar inconsistências entre persistência e mensageria.
+
 ## [0.3.0] - 2025-08-08
 ### Visão Geral
 Nesta release, evoluímos o projeto para integrar com o **Amazon DynamoDB** utilizando o DynamoDB **Enhanced Client** do **AWS SDK v2**.
