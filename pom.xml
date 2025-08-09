@@ -61,6 +61,22 @@
 		</dependency>
 		<!-- DynamoDB -->
 
+		<!-- SQS -->
+		<dependency>
+			<groupId>io.awspring.cloud</groupId>
+			<artifactId>spring-cloud-aws-starter-sqs</artifactId>
+			<version>3.4.0</version>
+		</dependency>
+		<!-- SQS -->
+
+		<!-- Jackson (payload em JSON) -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.19.2</version>
+		</dependency>
+		<!-- Jackson (payload em JSON) -->
+
 		<!-- Lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
