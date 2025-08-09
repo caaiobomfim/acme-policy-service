@@ -1,6 +1,19 @@
 server:
   port: 8080
 spring:
+  cloud:
+    aws:
+      region:
+        static: us-east-1
+      credentials:
+        access-key: test
+        secret-key: test
+      sqs:
+        endpoint: http://localhost:4566
+        listener:
+          max-messages: 10
+          poll-timeout: 10s
+          visibility-timeout: 30s
   application:
     name: policy-service
   main:
