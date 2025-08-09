@@ -3,12 +3,16 @@ package com.acme.insurance.policy.domain.service;
 import com.acme.insurance.policy.app.dto.PolicyRequestDto;
 import com.acme.insurance.policy.app.dto.PolicyResponseDto;
 import com.acme.insurance.policy.app.dto.fraud.FraudAnalysisResponse;
+import com.acme.insurance.policy.app.mapper.ApiPolicyMapper;
+import com.acme.insurance.policy.domain.model.Policy;
 import com.acme.insurance.policy.domain.ports.in.PolicyService;
 import com.acme.insurance.policy.domain.ports.out.FraudGateway;
+import com.acme.insurance.policy.infra.dynamodb.PolicyDynamoRepository;
+import com.acme.insurance.policy.infra.dynamodb.mapper.PolicyItemMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,39 +20,64 @@ import java.util.UUID;
 public class PolicyServiceImpl implements PolicyService {
 
     private final FraudGateway fraudGateway;
+    private final PolicyDynamoRepository policyDynamoRepository;
+    private final ApiPolicyMapper apiPolicyMapper;
+    private final PolicyItemMapper policyItemMapper;
 
-    public PolicyServiceImpl(FraudGateway fraudGateway) {
+    public PolicyServiceImpl(FraudGateway fraudGateway,
+                             PolicyDynamoRepository policyDynamoRepository,
+                             ApiPolicyMapper apiPolicyMapper,
+                             PolicyItemMapper policyItemMapper) {
         this.fraudGateway = fraudGateway;
+        this.policyDynamoRepository = policyDynamoRepository;
+        this.apiPolicyMapper = apiPolicyMapper;
+        this.policyItemMapper = policyItemMapper;
     }
 
     @Override
     public PolicyResponseDto createPolicy(PolicyRequestDto request) {
-        FraudAnalysisResponse fraud = fraudGateway.analyze(UUID.randomUUID(), request.customerId());
-        return new PolicyResponseDto(
+
+        Policy policy = apiPolicyMapper.toDomain(request);
+
+        policy = new Policy(
                 UUID.randomUUID(),
-                request.customerId(),
-                request.productId(),
-                request.category(),
-                request.salesChannel(),
-                request.paymentMethod(),
-                "RECEIVED",
-                OffsetDateTime.now(),
+                policy.customerId(),
+                policy.productId(),
+                policy.category(),
+                policy.salesChannel(),
+                policy.paymentMethod(),
+                policy.status(),
+                policy.createdAt(),
                 null,
-                request.totalMonthlyPremiumAmount(),
-                request.insuredAmount(),
-                request.coverages(),
-                request.assistances(),
-                Collections.emptyList()
+                policy.coverages(),
+                policy.assistances(),
+                policy.totalMonthlyPremiumAmount(),
+                policy.insuredAmount(),
+                List.of(new Policy.StatusHistory(
+                        "RECEIVED",
+                        policy.createdAt()))
         );
+
+        policyDynamoRepository.save(policyItemMapper.toItem(policy));
+
+        FraudAnalysisResponse fraud = fraudGateway.analyze(UUID.randomUUID(), request.customerId());
+
+        return apiPolicyMapper.toResponse(policy);
     }
 
     @Override
     public PolicyResponseDto getPolicyById(UUID id) {
-        return null;
+        return policyDynamoRepository.findById(id.toString())
+                .map(policyItemMapper::toDomain)
+                .map(apiPolicyMapper::toResponse)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @Override
     public List<PolicyResponseDto> getPoliciesByCustomerId(UUID customerId) {
-        return Collections.emptyList();
+        return policyDynamoRepository.findByCustomerId(customerId.toString()).stream()
+                .map(policyItemMapper::toDomain)
+                .map(apiPolicyMapper::toResponse)
+                .toList();
     }
 }
