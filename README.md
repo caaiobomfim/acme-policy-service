@@ -216,3 +216,6 @@ Endpoints testados:
 
 ### Histórico de mudanças
 Consulte o arquivo [CHANGELOG.md](./CHANGELOG.md) para ver as alterações de cada versão.
+
+## 📄 Desafio
+Para mais detalhes sobre o escopo e requisitos do desafio, consulte o arquivo [DESAFIO.md](./DESAFIO.md).
