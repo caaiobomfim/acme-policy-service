@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.3.0] - 2025-08-08
+### Visão Geral
+Nesta release, evoluímos o projeto para integrar com o **Amazon DynamoDB** utilizando o DynamoDB **Enhanced Client** do **AWS SDK v2**.
+Foi implementada toda a camada de persistência (`PolicyDynamoRepository`) para salvar e consultar apólices de seguros no DynamoDB, mapeando o domínio para um modelo de armazenamento (`PolicyItem`).
+Também introduzimos o **MapStruct** para automatizar o mapeamento entre `Policy` (domínio) e `PolicyItem` (persistência), reduzindo código boilerplate e centralizando as conversões.
+
+### Stack Técnico e Padrões
+- **AWS SDK v2** – **DynamoDB Enhanced Client**.
+- **MapStruct** para conversões entre objetos.
+- **Lombok** para geração de getters/setters.
+- **Maven** com configuração de `annotationProcessorPaths` para MapStruct e Lombok.
+- **LocalStack** para emular serviços AWS (DynamoDB).
+
+### Aprendizados
+- **Repository Pattern** aplicado para encapsular o acesso ao DynamoDB (`PolicyDynamoRepository`).
+- Uso de **@DynamoDbBean**, **@DynamoDbPartitionKey** e **@DynamoDbSecondaryPartitionKey** para simplificar o mapeamento objeto-tabela.
+- Separação de responsabilidades com um **Mapper dedicado** (`PolicyItemMapper`) para manter conversões isoladas e testáveis.
+- Configuração do **DynamoDbEnhancedClient** centralizada para garantir reuso e consistência.
+- Aprendizado sobre **problemas com ClassCastException** quando o Spring DevTools recarrega classes usadas pelo **Enhanced Client**, reforçando boas práticas para evitar conflitos de classloader.
+- Melhoria no `pom.xml` para suportar **annotation processors** do Lombok e MapStruct em conjunto (ordem correta no `annotationProcessorPaths`).
+
+### Adicionado
+- Integração com **Amazon DynamoDB** utilizando **DynamoDB Enhanced Client**.
+- Implementação do `PolicyDynamoRepository` para persistência e consulta de políticas no DynamoDB.
+- Criação do `PolicyItem` anotado com `@DynamoDbBean`, incluindo chave primária (`@DynamoDbPartitionKey`) e chave secundária global (`@DynamoDbSecondaryPartitionKey`).
+- Mapeamento entre `Policy` e `PolicyItem` utilizando **MapStruct**, com métodos auxiliares para conversão de tipos complexos (BigDecimal, OffsetDateTime, Map e List).
+- Configuração do `DynamoDbEnhancedClient` e da injeção do `DynamoDbTable<PolicyItem>` no repositório.
+
+### Alterado
+- Extração de lógica de mapeamento de atributos para uma classe Mapper dedicada (`PolicyItemMapper`), separando conversões utilitárias.
+- Ajustes no `pom.xml` para incluir dependências do **MapStruct**, **Lombok** e **AWS SDK DynamoDB Enhanced** com suporte a annotation processors.
+
+### Corrigido
+- Problema de `ClassCastException` causado pelo `Spring DevTools` e o carregamento de classes do DynamoDB Enhanced Client.
+
 ## [0.2.0] - 2025-08-08
 ### Visão Geral
 Implementação da integração com a **API de Fraudes** para análise de risco durante a criação de solicitações de apólice, utilizando **OpenFeign** e mock de resposta com **WireMock** para testes locais.
