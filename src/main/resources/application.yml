@@ -33,8 +33,20 @@ feign:
         loggerLevel: basic
 logging:
   level:
-    com.acme.insurance.policy.infra.fraud: DEBUG
+    com:
+      acme:
+        insurance:
+          policy:
+            infra:
+              fraud: DEBUG
     feign: INFO
+    io:
+      awspring:
+        cloud:
+          sqs: INFO
+    org:
+      springframework:
+        messaging: DEBUG
 aws:
   region: us-east-1
   dynamodb:
