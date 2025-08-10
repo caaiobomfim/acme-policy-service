@@ -2,7 +2,6 @@ package com.acme.insurance.policy.domain.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,20 @@ public record Policy(
         );
     }
 
+    public Policy withHistoryEntry(String marker, OffsetDateTime at) {
+        var newHistory = new ArrayList<>(history == null ? List.of() : history);
+        newHistory.add(new StatusHistory(marker, at));
+        return new Policy(
+                id, customerId, productId, category, salesChannel, paymentMethod,
+                status, createdAt, finishedAt, coverages, assistances,
+                totalMonthlyPremiumAmount, insuredAmount, List.copyOf(newHistory)
+        );
+    }
+
+    public boolean hasHistory(String marker) {
+        return history != null && history.stream().anyMatch(h -> marker.equalsIgnoreCase(h.status()));
+    }
+
     public Policy withFinishedAt(OffsetDateTime at) {
         return new Policy(
                 id, customerId, productId, category, salesChannel, paymentMethod,
@@ -47,7 +60,4 @@ public record Policy(
         );
     }
 
-    public Policy withStatusNow(String newStatus) {
-        return withStatusAndHistory(newStatus, OffsetDateTime.now(ZoneOffset.UTC));
-    }
 }
