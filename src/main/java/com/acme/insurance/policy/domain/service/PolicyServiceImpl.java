@@ -14,6 +14,8 @@ import com.acme.insurance.policy.domain.ports.out.FraudGateway;
 import com.acme.insurance.policy.infra.dynamodb.PolicyDynamoRepository;
 import com.acme.insurance.policy.infra.dynamodb.mapper.PolicyItemMapper;
 import com.acme.insurance.policy.infra.messaging.PolicyRequestPublisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,6 +28,8 @@ import java.util.UUID;
 
 @Service
 public class PolicyServiceImpl implements PolicyService {
+
+    private static final Logger log = LoggerFactory.getLogger(PolicyServiceImpl.class);
 
     private final FraudGateway fraudGateway;
     private final PolicyDynamoRepository policyDynamoRepository;
@@ -48,6 +52,8 @@ public class PolicyServiceImpl implements PolicyService {
     @Override
     public PolicyResponseDto createPolicy(PolicyRequestDto request) {
 
+        log.info("[SERVICE] Criando nova policy para customerId={} productId={}", request.customerId(), request.productId());
+
         Policy policy = apiPolicyMapper.toDomain(request);
 
         policy = new Policy(
@@ -69,8 +75,10 @@ public class PolicyServiceImpl implements PolicyService {
                         policy.createdAt()))
         );
 
+        log.info("Salvando policy no DynamoDB - id={}", policy.id());
         policyDynamoRepository.save(policyItemMapper.toItem(policy));
 
+        log.info("Publicando evento PolicyRequestCreatedEvent - id={}", policy.id());
         policyRequestPublisher.publish(new PolicyRequestCreatedEvent(
                 policy.id(),
                 policy.customerId(),
@@ -79,14 +87,18 @@ public class PolicyServiceImpl implements PolicyService {
                 Instant.now()
         ));
 
+        log.info("Chamando análise de fraude...");
         FraudAnalysisResponse fraud = fraudGateway.analyze(policy.id(), policy.customerId());
+        log.info("Resultado da fraude - classification={}", fraud.classification());
 
         FraudClassification classification = FraudClassification.from(fraud.classification());
 
         boolean approved = FraudRules.isApproved(classification, policy.category(), policy.insuredAmount());
+        log.info("Fraude aprovada? {}", approved);
 
         if (approved) {
             var validatedAt = OffsetDateTime.now(ZoneOffset.UTC);
+            log.info("Status alterado para VALIDATED - id={}", policy.id());
             policy = policy.withStatusAndHistory("VALIDATED", validatedAt);
             policyDynamoRepository.save(policyItemMapper.toItem(policy));
             policyRequestPublisher.publish(new PolicyRequestStatusChangedEvent(
@@ -99,6 +111,7 @@ public class PolicyServiceImpl implements PolicyService {
             ));
 
             var pendingAt = OffsetDateTime.now(ZoneOffset.UTC);
+            log.info("Status alterado para PENDING - id={}", policy.id());
             policy = policy.withStatusAndHistory("PENDING", pendingAt);
             policyDynamoRepository.save(policyItemMapper.toItem(policy));
             policyRequestPublisher.publish(new PolicyRequestStatusChangedEvent(
@@ -112,6 +125,7 @@ public class PolicyServiceImpl implements PolicyService {
 
         } else {
             var rejectedAt = OffsetDateTime.now(ZoneOffset.UTC);
+            log.info("Status alterado para REJECTED - id={}", policy.id());
             policy = policy.withStatusAndHistory("REJECTED", rejectedAt);
             policyDynamoRepository.save(policyItemMapper.toItem(policy));
             policyRequestPublisher.publish(new PolicyRequestStatusChangedEvent(
@@ -124,22 +138,30 @@ public class PolicyServiceImpl implements PolicyService {
             ));
         }
 
+        log.info("[SERVICE] Policy criada e processada com sucesso - id={}", policy.id());
         return apiPolicyMapper.toResponse(policy);
     }
 
     @Override
     public PolicyResponseDto getPolicyById(UUID id) {
+        log.info("[SERVICE] Buscando policy por id={}", id);
         return policyDynamoRepository.findById(id.toString())
                 .map(policyItemMapper::toDomain)
                 .map(apiPolicyMapper::toResponse)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("[SERVICE] Policy não encontrada - id={}", id);
+                    return new ResponseStatusException(HttpStatus.NOT_FOUND);
+                });
     }
 
     @Override
     public List<PolicyResponseDto> getPoliciesByCustomerId(UUID customerId) {
-        return policyDynamoRepository.findByCustomerId(customerId.toString()).stream()
+        log.info("[SERVICE] Buscando policies para customerId={}", customerId);
+        List<PolicyResponseDto> list = policyDynamoRepository.findByCustomerId(customerId.toString()).stream()
                 .map(policyItemMapper::toDomain)
                 .map(apiPolicyMapper::toResponse)
                 .toList();
+        log.info("[SERVICE] Encontradas {} policies para customerId={}", list.size(), customerId);
+        return list;
     }
 }
