@@ -24,10 +24,6 @@
 		<!-- Spring Boot -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-amqp</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
@@ -47,17 +43,14 @@
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb</artifactId>
-			<version>2.32.18</version>
 		</dependency>
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>auth</artifactId>
-			<version>2.32.18</version>
 		</dependency>
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb-enhanced</artifactId>
-			<version>2.32.18</version>
 		</dependency>
 		<!-- DynamoDB -->
 
@@ -68,6 +61,12 @@
 			<version>3.4.0</version>
 		</dependency>
 		<!-- SQS -->
+
+		<dependency>
+			<groupId>io.awspring.cloud</groupId>
+			<artifactId>spring-cloud-aws-sqs</artifactId>
+			<version>3.4.0</version>
+		</dependency>
 
 		<!-- Jackson (payload em JSON) -->
 		<dependency>
@@ -111,6 +110,17 @@
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
+			<!-- AWS SDK V2 -->
+			<dependency>
+				<groupId>software.amazon.awssdk</groupId>
+				<artifactId>bom</artifactId>
+				<version>2.32.18</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- AWS SDK V2 -->
+
+			<!-- Spring Cloud (Feign, etc.) -->
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
@@ -118,6 +128,17 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+			<!-- Spring Cloud (Feign, etc.) -->
+
+			<!-- AWS Spring Cloud (SQS, e AWS SDK v2) -->
+			<dependency>
+				<groupId>io.awspring.cloud</groupId>
+				<artifactId>spring-cloud-aws-dependencies</artifactId>
+				<version>3.4.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- AWS Spring Cloud (SQS, e AWS SDK v2) -->
 		</dependencies>
 	</dependencyManagement>
 
