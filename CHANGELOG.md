@@ -1,5 +1,52 @@
 # Changelog
 
+## [0.5.0] - 2025-08-10
+### Visão Geral
+Nesta release, o microsserviço evoluiu o fluxo assíncrono de integração com a adição de dois novos **consumidores SQS**: `PaymentResultsConsumer` e `SubscriptionResultsConsumer`.  
+Esses consumidores processam eventos de pagamento e subscrição, aplicando regras de negócio para alteração do status da apólice, registro de históricos e publicação de eventos de mudança de status.  
+Foi implementada a detecção de combinações de marcadores (`PAYMENT_CONFIRMED` e `SUBSCRIPTION_AUTHORIZED`) para aprovação automática, bem como a finalização do ciclo da apólice (`finishedAt`) nos casos de aprovação ou rejeição.
+
+### Stack Técnico e Padrões
+- **Spring Cloud AWS SQS** para consumo de mensagens com `@SqsListener`.
+- **LocalStack** para emulação local das filas de pagamento e subscrição.
+- Métodos imutáveis no agregado `Policy` para:
+  - Adicionar entradas de histórico (`withHistoryEntry`).
+  - Alterar status e registrar histórico (`withStatusAndHistory`).
+  - Encerrar ciclo (`withFinishedAt`).
+  - Verificar presença de marcadores (`hasHistory`).
+- Marcadores e status tratados com `equalsIgnoreCase` para robustez.
+- Logs estruturados para rastreabilidade dos eventos recebidos e decisões tomadas.
+
+### Aprendizados
+- Boas práticas para consumidores SQS desacoplados, com responsabilidades claras e reutilização de lógica no domínio (`Policy`).
+- Estratégias para correlacionar múltiplos eventos assíncronos e disparar mudanças de estado somente quando todas as condições forem atendidas.
+- Benefícios de manter o domínio imutável e centralizar alterações de estado no agregado.
+
+### Adicionado
+- `PaymentResultsConsumer`:
+  - Processamento de eventos `PaymentResultEvent`.
+  - Registro de marcador `PAYMENT_CONFIRMED` no histórico.
+  - Alteração para `REJECTED` em pagamentos negados.
+  - Aprovação automática (`APPROVED`) quando `PAYMENT_CONFIRMED` e `SUBSCRIPTION_AUTHORIZED` estão presentes no histórico.
+- `SubscriptionResultsConsumer`:
+  - Processamento de eventos `SubscriptionResultEvent`.
+  - Registro de marcador `SUBSCRIPTION_AUTHORIZED` no histórico.
+  - Alteração para `REJECTED` em subscrições negadas.
+  - Aprovação automática (`APPROVED`) quando ambos os marcadores estão presentes.
+- Métodos no agregado `Policy`:
+  - `withHistoryEntry` e `withHistoryEntryNow`.
+  - `hasHistory` para verificação de marcadores.
+  - Ajustes em `withStatusAndHistory` para uso consistente.
+  - `withFinishedAt` para registro do encerramento do ciclo.
+
+### Alterado
+- Refatoração do `PaymentResultsConsumer` para utilizar métodos específicos do agregado `Policy` em vez de manipulação direta da lista de histórico.
+- Alinhamento do `SubscriptionResultsConsumer` com o padrão de implementação do `PaymentResultsConsumer`.
+
+### Notas
+- Todo o fluxo pode ser testado localmente com LocalStack e mensagens mockadas no SQS.
+- A decisão de aprovação automática é sensível à ordem de chegada dos eventos, sendo persistida a informação de cada marcador no histórico até que a combinação necessária seja atingida.
+
 ## [0.4.0] - 2025-08-09
 ### Visão Geral
 Nesta release, o microsserviço passou a publicar eventos de solicitações de apólice em uma fila **Amazon SQS** após a persistência no **DynamoDB**, simulando o fluxo assíncrono de integração entre sistemas.
