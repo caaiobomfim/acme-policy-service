@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.6.0] - 2025-08-11
+### Visão Geral
+Refatoração grande para **portas e casos de uso** (Clean/Hexagonal), formalização da **máquina de estados** e ajustes REST. Também habilitamos toggles de mensageria e estabilizamos build/testes.
+
+### Stack Técnico e Padrões
+- **Use Case / Query pattern**: `CreatePolicyUseCase`, `CancelPolicyUseCase`, `GetPolicyByIdQuery`, `ListPoliciesByCustomerQuery` (interfaces com `execute(...)`) + implementações.
+- **Ports & Adapters**: `PolicyRepository`, `PolicyRequestPublisher`, `FraudGateway`, `ApiPolicyMapper`.
+- **State Pattern**: `PolicyStateMachine` + `PolicyStatus` (enum) controlando transições.
+- **Feature toggles** com `@ConditionalOnProperty` (publisher/listeners SQS).
+- **@ConfigurationProperties**: `AppProps` (aws/sqs/dynamo).
+- **@EnableScheduling** via `SchedulingConfig`.
+
+### Adicionado
+- **Endpoint de cancelamento** de solicitação retornando **204 No Content**.
+- **`Location` header** no `@PostMapping` de criação (201 com URI do recurso).
+- `InMemoryCorrelationStore` para correlacionar pagamento/subscrição que chegam fora de ordem.
+
+### Alterado
+- Controller deixa de chamar `PolicyServiceImpl` diretamente e passa a delegar para **UseCases/Queries**.
+- **`Policy.status`** de `String` → `PolicyStatus` (**enum**) com transições mediadas por `PolicyStateMachine`. **Breaking**: atualize contratos/mapeamentos que esperavam `String`.
+- Serviços de aplicação reescritos para depender de **ports**:  
+  `CreatePolicyService` (usa `PolicyRepository`, `PolicyRequestPublisher`, `FraudGateway`, `ApiPolicyMapper`, `PolicyStateMachine`),  
+  `GetPolicyByIdService` e `ListPoliciesByCustomerService` (usam `PolicyRepository` + `ApiPolicyMapper`),  
+  `CancelPolicyService` (usa `PolicyRepository`, `PolicyStateMachine`, `ApiPolicyMapper`).
+- `PolicyStateMachine` passa a interagir com `PolicyRepository`, `PolicyRequestPublisher` e `InMemoryCorrelationStore`.
+- `PolicyDynamoRepository` refatorado para utilizar **mappers de conversão**.
+
+### Corrigido
+- Falha no `mvn clean install` por ausência do bean `PolicyRequestPublisher` em testes: resolvido com **publisher no-op** via `MessagingNoopConfig`.
+
+### Config & Infra
+- Reorganização do **`application.yml`** (grupos aws/sqs/dynamo) e criação do **`application-test.yml`**.
+- **Docker Compose**: container da aplicação na **8080**, variáveis de ambiente e **network bridge**.
+- **Dockerfile** multi-stage (builder).
+- **Maven**: `maven-surefire-plugin` configurando `spring.profiles.active=test`.
+
+### Notas
+- Reestruturei o módulo para casos de uso, isolando regras de domínio da camada web.
+- Modelei a máquina de estados com `PolicyStateMachine` + `PolicyStatus`, deixando as transições explícitas e testáveis.
+- Tratei a correlação assíncrona (pagamento/subscrição) com o `InMemoryCorrelationStore` para aprovar somente quando ambos chegarem.
+- Mantive o build estável em ambientes sem SQS com toggles e publisher no-op.
+
 ## [0.5.0] - 2025-08-10
 ### Visão Geral
 Nesta release, o microsserviço evoluiu o fluxo assíncrono de integração com a adição de dois novos **consumidores SQS**: `PaymentResultsConsumer` e `SubscriptionResultsConsumer`.  
