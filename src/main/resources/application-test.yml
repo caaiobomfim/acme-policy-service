@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    aws:
+      sqs:
+        enabled: false
+app:
+  sqs:
+    enabled: false
+    listeners:
+      enabled: false

@@ -1,6 +1,15 @@
 server:
   port: 8080
+
 spring:
+  application:
+    name: policy-service
+  main:
+    allow-bean-definition-overriding: true
+  devtools:
+    restart:
+      enabled: false
+
   cloud:
     aws:
       region:
@@ -9,21 +18,42 @@ spring:
         access-key: test
         secret-key: test
       sqs:
-        endpoint: http://localhost:4566
+        endpoint: http://localstack:4566
         listener:
           max-messages: 10
           poll-timeout: 10s
           visibility-timeout: 30s
-  application:
-    name: policy-service
-  main:
-    allow-bean-definition-overriding: true
-  devtools:
-    restart:
-      enabled: false
+      dynamodb:
+        endpoint: http://localstack:4566
+
+app:
+  aws:
+    region: us-east-1
+    credentials:
+      access-key: test
+      secret-key: test
+    endpoints:
+      sqs: http://localstack:4566
+      dynamodb: http://localstack:4566
+  sqs:
+    queues:
+      payments: payments-topic
+      subscriptions: insurance-subscriptions-topic
+      orders: orders-topic
+    listener:
+      max-messages: 10
+      poll-timeout: 10s
+      visibility-timeout: 30s
+      concurrency: 2
+  dynamodb:
+    table: PolicyRequests
+    indexes:
+      customer: gsi_customer
+
 policy:
   fraud:
-    base-url: http://localhost:8089/v1
+    base-url: http://wiremock:8080/v1
+
 feign:
   client:
     config:
@@ -31,24 +61,10 @@ feign:
         connectTimeout: 3000
         readTimeout: 5000
         loggerLevel: basic
+
 logging:
   level:
-    com:
-      acme:
-        insurance:
-          policy:
-            infra:
-              fraud: DEBUG
+    com.acme.insurance.policy.infra.fraud: DEBUG
     feign: INFO
-    io:
-      awspring:
-        cloud:
-          sqs: INFO
-    org:
-      springframework:
-        messaging: DEBUG
-aws:
-  region: us-east-1
-  dynamodb:
-    endpoint: http://localhost:4566
-    table: PolicyRequests
+    io.awspring.cloud.sqs: INFO
+    org.springframework.messaging: DEBUG
