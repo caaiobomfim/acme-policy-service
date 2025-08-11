@@ -1,6 +1,7 @@
 package com.acme.insurance.policy.infra.dynamodb.mapper;
 
 import com.acme.insurance.policy.domain.model.Policy;
+import com.acme.insurance.policy.domain.model.PolicyStatus;
 import org.mapstruct.Named;
 
 import java.math.BigDecimal;
@@ -53,17 +54,24 @@ public class PolicyMapConverters {
     /* History <-> Map representation */
     @Named("toHistoryMap")
     public static List<Map<String, String>> toHistoryMap(List<Policy.StatusHistory> hist) {
-        if (hist == null) return List.of();
+        if (hist == null || hist.isEmpty()) return List.of();
         return hist.stream()
-                .map(h -> Map.of("status", h.status(), "timestamp", h.timestamp().toString()))
+                .map(h -> Map.of(
+                        "status", h.status().name(),
+                        "timestamp", h.timestamp().toString()
+                ))
                 .toList();
     }
 
+    /* List<Map> (persistência) -> History (domain) */
     @Named("fromHistoryMap")
-    public static List<Policy.StatusHistory> fromHistoryMap(List<Map<String, String>> hist) {
-        if (hist == null) return List.of();
-        return hist.stream()
-                .map(m -> new Policy.StatusHistory(m.get("status"), OffsetDateTime.parse(m.get("timestamp"))))
+    public static List<Policy.StatusHistory> fromHistoryMap(List<Map<String, String>> maps) {
+        if (maps == null || maps.isEmpty()) return List.of();
+        return maps.stream()
+                .map(m -> new Policy.StatusHistory(
+                        PolicyStatus.valueOf(m.get("status")),
+                        OffsetDateTime.parse(m.get("timestamp"))
+                ))
                 .toList();
     }
 }
