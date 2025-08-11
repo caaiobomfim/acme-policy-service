@@ -2,10 +2,7 @@ package com.acme.insurance.policy.domain.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public record Policy(
         UUID id,
@@ -14,7 +11,7 @@ public record Policy(
         String category,
         String salesChannel,
         String paymentMethod,
-        String status,
+        PolicyStatus status,
         OffsetDateTime createdAt,
         OffsetDateTime finishedAt,
         Map<String, BigDecimal> coverages,
@@ -23,12 +20,13 @@ public record Policy(
         BigDecimal insuredAmount,
         List<StatusHistory> history
 ) {
+
     public record StatusHistory(
-            String status,
+            PolicyStatus status,
             OffsetDateTime timestamp
     ) {}
 
-    public Policy withStatusAndHistory(String newStatus, OffsetDateTime at) {
+    public Policy withStatusAndHistory(PolicyStatus newStatus, OffsetDateTime at) {
         var newHistory = new ArrayList<>(history == null ? List.of() : history);
         newHistory.add(new StatusHistory(newStatus, at));
         return new Policy(
@@ -38,7 +36,7 @@ public record Policy(
         );
     }
 
-    public Policy withHistoryEntry(String marker, OffsetDateTime at) {
+    public Policy withHistoryEntry(PolicyStatus marker, OffsetDateTime at) {
         var newHistory = new ArrayList<>(history == null ? List.of() : history);
         newHistory.add(new StatusHistory(marker, at));
         return new Policy(
@@ -48,8 +46,8 @@ public record Policy(
         );
     }
 
-    public boolean hasHistory(String marker) {
-        return history != null && history.stream().anyMatch(h -> marker.equalsIgnoreCase(h.status()));
+    public boolean hasHistory(PolicyStatus marker) {
+        return history != null && history.stream().anyMatch(h -> h.status() == marker);
     }
 
     public Policy withFinishedAt(OffsetDateTime at) {
@@ -60,4 +58,11 @@ public record Policy(
         );
     }
 
+    public boolean isFinalStatus() {
+        if (status == null) return false;
+        return EnumSet.of(PolicyStatus.APPROVED,
+                        PolicyStatus.REJECTED,
+                        PolicyStatus.CANCELLED)
+                .contains(status);
+    }
 }
