@@ -1,0 +1,10 @@
+target
+tools
+docs
+.idea
+.git
+.mvn/wrapper/maven-wrapper.jar
+
+*.md
+*.sh
+*.log
