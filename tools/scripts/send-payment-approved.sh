@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REQUEST_ID="45dc4a1f-69c8-44bb-9c43-39e121a4c6c1"
+REQUEST_ID="8d86546c-f580-40a9-ad2c-a6049b908f5b"
 PAYMENT_ID="16ba8cb6-4da9-40e2-b71f-e99fd4873a2a"
 OCCURRED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
