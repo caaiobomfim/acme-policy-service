@@ -13,4 +13,6 @@ public interface PolicyService {
     PolicyResponseDto getPolicyById(UUID id);
 
     List<PolicyResponseDto> getPoliciesByCustomerId(UUID customerId);
+
+    PolicyResponseDto cancelPolicy(UUID id);
 }
