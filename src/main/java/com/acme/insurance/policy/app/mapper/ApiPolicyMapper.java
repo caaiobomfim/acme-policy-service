@@ -38,7 +38,7 @@ public interface ApiPolicyMapper {
     default List<PolicyResponseDto.StatusHistoryDto> mapHistory(List<Policy.StatusHistory> history) {
         if (history == null) return List.of();
         return history.stream()
-                .map(h -> new PolicyResponseDto.StatusHistoryDto(h.status(), h.timestamp()))
+                .map(h -> new PolicyResponseDto.StatusHistoryDto(h.status().name(), h.timestamp()))
                 .toList();
     }
 }
