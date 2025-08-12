@@ -71,3 +71,9 @@ logging:
     feign: INFO
     io.awspring.cloud.sqs: INFO
     org.springframework.messaging: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
