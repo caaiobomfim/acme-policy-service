@@ -36,20 +36,6 @@ public record Policy(
         );
     }
 
-    public Policy withHistoryEntry(PolicyStatus marker, OffsetDateTime at) {
-        var newHistory = new ArrayList<>(history == null ? List.of() : history);
-        newHistory.add(new StatusHistory(marker, at));
-        return new Policy(
-                id, customerId, productId, category, salesChannel, paymentMethod,
-                status, createdAt, finishedAt, coverages, assistances,
-                totalMonthlyPremiumAmount, insuredAmount, List.copyOf(newHistory)
-        );
-    }
-
-    public boolean hasHistory(PolicyStatus marker) {
-        return history != null && history.stream().anyMatch(h -> h.status() == marker);
-    }
-
     public Policy withFinishedAt(OffsetDateTime at) {
         return new Policy(
                 id, customerId, productId, category, salesChannel, paymentMethod,
