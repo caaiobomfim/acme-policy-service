@@ -12,6 +12,18 @@ Refatoração grande para **portas e casos de uso** (Clean/Hexagonal), formaliza
 - **@ConfigurationProperties**: `AppProps` (aws/sqs/dynamo).
 - **@EnableScheduling** via `SchedulingConfig`.
 
+### Aprendizados
+- **Hexagonal de verdade simplifica o acoplamento**: separar *controllers* → *use cases/queries* → *ports/adapters* deixou dependências explícitas e facilitou testes e evolução.
+- **Máquina de estados evita “stringly-typed” bugs**: trocar `status` de `String` para `enum (PolicyStatus)` mais `PolicyStateMachine` eliminou transições inválidas e centralizou regras.
+- **Quebra de contrato precisa de fronteiras claras**: ao migrar `String` → `enum`, mapeamentos e DTOs nas bordas impedem que a mudança “vaze” para clientes.
+- **Eventos chegam fora de ordem**: o `InMemoryCorrelationStore` mostrou-se essencial para reconciliar pagamento e subscrição; fluxos assíncronos exigem correlação e tempo de expiração.
+- **Toggles salvam o build**: `@ConditionalOnProperty` e publisher **no-op** mantêm o build/testes estáveis sem SQS/infra externa — útil para dev local e CI.
+- **REST bem definido reduz ambiguidade**: `201 + Location` na criação e `204 No Content` no cancelamento tornaram contratos previsíveis e fáceis de consumir.
+- **Repos e mappers isolam persistência**: mover conversões para mappers dedicados simplificou o `PolicyDynamoRepository` e evitou vazamento do modelo de dados para o domínio.
+- **Config por ambiente traz reprodutibilidade**: separar `application.yml` de `application-test.yml` padronizou execução em dev/CI e diminuiu “flakiness”.
+- **Serviços de app mais enxutos**: delegar regras de transição à `PolicyStateMachine` e integrações a *ports* reduziu *if/else* espalhado e melhorou a legibilidade.
+- **Agendador abre espaço para rotinas de saúde**: `@EnableScheduling` cria base para limpezas e reconciliações periódicas em fluxos assíncronos.
+
 ### Adicionado
 - **Endpoint de cancelamento** de solicitação retornando **204 No Content**.
 - **`Location` header** no `@PostMapping` de criação (201 com URI do recurso).
