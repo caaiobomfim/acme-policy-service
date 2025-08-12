@@ -14,6 +14,7 @@ services:
       - "./localstack/init:/etc/localstack/init/ready.d"
     networks:
       - app-net
+
   wiremock:
     image: wiremock/wiremock:3.9.1
     command: ["--verbose","--global-response-templating"]
@@ -23,6 +24,7 @@ services:
     ports: ["8089:8080"]
     networks:
       - app-net
+
   app:
     build:
       context: ..
@@ -38,9 +40,38 @@ services:
       - SQS_ENDPOINT=http://localstack:4566
       - FRAUD_API_URL=http://wiremock:8080
       - SERVER_PORT=8080
+      - OTEL_SERVICE_NAME=policy-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_TRACES_SAMPLER=parentbased_always_on
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_INSTRUMENTATION_COMMON_PEER_SERVICE_MAPPING=wiremock:8080=fraud-api,localstack:4566=aws-localstack
+      - OTEL_RESOURCE_ATTRIBUTES=service.version=0.1.0,env=dev
     depends_on:
       - localstack
       - wiremock
+      - otel-collector
+    networks:
+      - app-net
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+    networks:
+      - app-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ../observability/otel-collector.yaml:/etc/otel-collector.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
     networks:
       - app-net
 
