@@ -1,5 +1,59 @@
 # Changelog
 
+## [0.7.0] - 2025-08-12
+### Visão Geral
+Foco em **qualidade, validação** e **padronização de erros** via RFC 7807, além de uma **matriz de testes** mais robusta (unitários e de integração) com **gate de cobertura em 90%**.
+
+### Stack Técnico e Padrões
+- **Jakarta Validation**: `@Positive`, `@Digits(integer=..., fraction=2)` para valores monetários (sempre positivos e com até 2 casas decimais).
+- **RFC 7807** com `ProblemDetail` em `@RestControllerAdvice` (handler global).
+- **Exceções personalizadas** para 404/409 integradas ao padrão RFC 7807.
+- **Testes unitários** com **JUnit 5**, **Mockito** e **AssertJ**.
+- **Testes de integração** com **Testcontainers**, **LocalStack**, **AWS SDK v2** e **WireMock (Jetty 12)**.
+- **Build**: Maven **Surefire** (unit) + **Failsafe** (IT) e **JaCoCo** (mínimo 90%).
+
+### Aprendizados
+- **Validar na borda reduz retrabalho**: Bean Validation (`@Positive`, `@Digits`) bloqueia payloads inválidos cedo e mantém camadas internas mais simples e previsíveis.
+- **Erros padronizados ajudam clientes**: adotar **RFC 7807** com `ProblemDetail` facilita parsing no consumidor e padroniza campos como `type`, `title`, `status`, `detail` e `instance`.
+- **Mensagens neutras para o cliente, detalhes nos logs**: exceções de integrações (upstream) não devem “vazar” para o caller; logar informações ricas internamente (com **correlation id**) e devolver mensagens amigáveis/estáveis.
+- **Exceções de domínio deixam o fluxo explícito**: mapear 404/409 como **exceções de negócio** nos *use cases* torna regras e transições mais testáveis e evita `if/else` disperso.
+- **Testes em camadas, intenções diferentes**: unitários para regras puras e contratos locais; integrações (`IT`) para caminhos E2E (consumers/producers/DynamoDB) com **Testcontainers/LocalStack/WireMock** e uso de **Awaitility** para assíncronos.
+- **Failsafe/Surefire bem configurados evitam surpresas**: separar execução de unit vs IT e nomear IT por sufixo melhora a previsibilidade do `mvn verify`.
+- **Cobertura é um *guard-rail*, não um fim**: meta de **90%** força disciplina, mas o foco deve ser em **caminhos críticos** (inclusive de erro) e não em “bater linha”.
+- **Configs de teste isolam o ambiente**: `application-test.yml` com timeouts, níveis de log e endpoints fakes/locais torna a suíte **determinística** e reproduzível.
+- **Integrações precisam de contratos claros**: simular 204, timeouts e corpos inconsistentes cedo evita bugs em produção; definir o retorno “genérico” do serviço para cada classe de falha.
+
+### Adicionado
+- Validações nos DTOs/inputs das rotas de *policy* com `@Positive` e `@Digits`, incluindo **mensagens claras** quando violadas.
+- `GlobalProblemHandler` com `@RestControllerAdvice` padronizando respostas de erro com **`ProblemDetail` (RFC 7807)**.
+- **Exceções customizadas** (p.ex. *NotFound* 404 e *Conflict* 409) para rotas de **consulta** e **cancelamento**.
+- **Testes unitários** cobrindo *controllers*, *mappers*, *services*, *use cases*, *controller advice*, *fraud rules*, *model*, *DynamoRepository*, **cache store**, **consumers** e **publishers**.
+- **Testes de integração** (sufixo **`IT`**, `@SpringBootTest`) para **consumers**, **producer** e **DynamoDB**, isolados com Testcontainers/LocalStack/WireMock.
+
+### Alterado
+- Implementações de **use cases** passam a **lançar as novas exceções** (404/409) para jornadas de **solicitação**, **consulta** e **cancelamento** de *policy*.
+- Ampliação do `application-test.yml` com:
+  - base URL de fraudes,
+  - Feign `connectTimeout`/`readTimeout` e `loggerLevel`,
+  - `logging.level` por pacote,
+  - credenciais AWS para execução local de testes.
+
+### Config & Build
+- `pom.xml`: inclusão/ajuste de **Testcontainers** (LocalStack), **Awaitility**, **Jetty**, **Instancio**, **WireMock (Jetty 12)**.
+- **Plugins**:
+  - **maven-surefire-plugin** – executa testes unitários;
+  - **maven-failsafe-plugin** – executa **IT**;
+  - **jacoco-maven-plugin** – **relatórios** e **regra mínima de 90%** (falha o build abaixo disso).
+- Convenções de testes: **unit** por padrão; **integração** com sufixo **`IT`**.
+
+### Testes
+- **Unitários**: cenários de **sucesso** e de **lançamento de exceções** com *mocks* (Mockito) e *assertions* fluent (AssertJ).
+- **Integração**: cenários end-to-end para **consumo/publicação** em mensageria e **persistência DynamoDB**, stubs de integrações com WireMock.
+
+### Notas
+- Execução recomendada: `mvn clean verify` (roda unit + IT + cobertura JaCoCo).
+- Relatório em `target/site/jacoco/index.html`.
+
 ## [0.6.0] - 2025-08-11
 ### Visão Geral
 Refatoração grande para **portas e casos de uso** (Clean/Hexagonal), formalização da **máquina de estados** e ajustes REST. Também habilitamos toggles de mensageria e estabilizamos build/testes.
