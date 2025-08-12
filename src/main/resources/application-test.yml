@@ -1,10 +1,41 @@
 spring:
   cloud:
     aws:
+      region:
+        static: us-east-1
+      credentials:
+        access-key: test
+        secret-key: test
       sqs:
-        enabled: false
+        enabled: true
 app:
-  sqs:
-    enabled: false
-    listeners:
-      enabled: false
+  aws:
+    region: us-east-1
+    sqs:
+      enabled: true
+      listeners:
+        enabled: true
+
+policy:
+  fraud:
+    base-url: http://localhost:0
+
+feign:
+  client:
+    config:
+      fraudClient:
+        connectTimeout: 500
+        readTimeout: 500
+        loggerLevel: FULL
+
+logging:
+  level:
+    io:
+      awspring:
+        cloud:
+          sqs:
+            listener:
+              source: OFF
+    software:
+      amazon:
+        awssdk: warn
