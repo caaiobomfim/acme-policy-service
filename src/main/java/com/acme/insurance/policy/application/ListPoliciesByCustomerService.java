@@ -1,6 +1,7 @@
 package com.acme.insurance.policy.application;
 
 import com.acme.insurance.policy.app.dto.PolicyResponseDto;
+import com.acme.insurance.policy.app.error.PolicyNotFoundByIdCustomerException;
 import com.acme.insurance.policy.app.mapper.ApiPolicyMapper;
 import com.acme.insurance.policy.domain.ports.in.ListPoliciesByCustomerQuery;
 import com.acme.insurance.policy.domain.ports.out.PolicyRepository;
@@ -32,6 +33,12 @@ public class ListPoliciesByCustomerService implements ListPoliciesByCustomerQuer
                 .stream()
                 .map(apiPolicyMapper::toResponse)
                 .toList();
+
+        if (list.isEmpty()) {
+            log.warn("[USECASE] Nenhuma policy encontrada para customerId={}", customerId);
+            throw new PolicyNotFoundByIdCustomerException(customerId);
+        }
+
         log.info("[USECASE] Encontradas {} policies para customerId={}", list.size(), customerId);
         return list;
     }

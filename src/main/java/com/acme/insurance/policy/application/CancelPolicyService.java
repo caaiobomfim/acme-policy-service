@@ -1,15 +1,15 @@
 package com.acme.insurance.policy.application;
 
 import com.acme.insurance.policy.app.dto.PolicyResponseDto;
+import com.acme.insurance.policy.app.error.PolicyCancelConflictException;
+import com.acme.insurance.policy.app.error.PolicyNotFoundException;
 import com.acme.insurance.policy.app.mapper.ApiPolicyMapper;
 import com.acme.insurance.policy.domain.model.Policy;
 import com.acme.insurance.policy.domain.ports.in.CancelPolicyUseCase;
 import com.acme.insurance.policy.domain.ports.out.PolicyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -35,14 +35,11 @@ public class CancelPolicyService implements CancelPolicyUseCase {
         log.info("[USECASE] Cancelamento solicitado - id={}", id);
 
         Policy policy = policyRepository.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Policy não encontrada"));
+                new PolicyNotFoundException(id));
 
         if (policy.isFinalStatus()) {
             log.warn("[USECASE] Cancelamento inválido - id={} statusAtual={}", policy.id(), policy.status());
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Não é possível cancelar uma policy com status final: " + policy.status()
-            );
+            throw new PolicyCancelConflictException(policy.id(), policy.status());
         }
 
         Policy updated = policyStateMachine.cancel(policy, "BY_CUSTOMER_REQUEST");

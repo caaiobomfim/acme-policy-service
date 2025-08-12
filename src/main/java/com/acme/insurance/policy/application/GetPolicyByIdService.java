@@ -1,14 +1,13 @@
 package com.acme.insurance.policy.application;
 
 import com.acme.insurance.policy.app.dto.PolicyResponseDto;
+import com.acme.insurance.policy.app.error.PolicyNotFoundException;
 import com.acme.insurance.policy.app.mapper.ApiPolicyMapper;
 import com.acme.insurance.policy.domain.ports.in.GetPolicyByIdQuery;
 import com.acme.insurance.policy.domain.ports.out.PolicyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
@@ -33,7 +32,7 @@ public class GetPolicyByIdService implements GetPolicyByIdQuery {
                 .map(apiPolicyMapper::toResponse)
                 .orElseThrow(() -> {
                     log.warn("[USECASE] Policy não encontrada - id={}", id);
-                    return new ResponseStatusException(HttpStatus.NOT_FOUND, "Policy não encontrada");
+                    return new PolicyNotFoundException(id);
                 });
     }
 }
