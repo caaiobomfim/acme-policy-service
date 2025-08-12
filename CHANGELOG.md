@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.8.0] - 2025-08-12
+### Visão Geral
+Foco em **observabilidade ponta a ponta**: métricas via **Actuator/Micrometer/Prometheus**, **traces distribuídos** com **OpenTelemetry** e visualização no **Jaeger**, além de **logs** configurados via `logback-spring.xml`.
+
+### Stack Técnico e Padrões
+- **Spring Boot Actuator** para health/metrics/info.
+- **Micrometer + Prometheus Registry** para exposição de métricas em `/actuator/prometheus`.
+- **OpenTelemetry Java Agent** (auto-instrumentation) + **OTel Collector** (OTLP).
+- **Jaeger** como backend de traces.
+- **Logback** configurado via `logback-spring.xml` (logs estruturados e níveis por pacote).
+
+### Aprendizados
+- **Três pilares, um fluxo**: *metrics* para SLO/alertas, *traces* para latência e dependências, *logs* para contexto — combinados, aceleram RCA.
+- **Auto-instrumentação dá tração**: o **OTel Agent** provê valor imediato; instrumentação manual pode vir depois nos pontos críticos (e.g., spans em regras de negócio).
+- **Métricas “prometheus-friendly”**: expor `/actuator/prometheus` evita *scrapers* customizados e padroniza painéis.
+- **Compose como laboratório de observabilidade**: Jaeger + Collector locais encurtam feedback loop e reduzem surpresas em ambientes superiores.
+- **Naming importa**: `OTEL_SERVICE_NAME` consistente facilita correlação entre serviços e dashboards.
+
+### Adicionado
+- Dependências: `spring-boot-starter-actuator` e `micrometer-registry-prometheus`.
+- Arquivo `otel-collector.yaml` com pipeline OTLP (receivers/exporters/processors).
+- Agente `opentelemetry-javaagent.jar` integrado à aplicação.
+- `logback-spring.xml` para padronizar formatação e níveis de log.
+- Propriedades no `application.yml`:
+  - `management.endpoints.web.exposure.include: health,info,metrics,prometheus`.
+- **Docker Compose**:
+  - Serviços **jaeger** e **otel-collector** adicionados.
+  - Variáveis de ambiente OTEL no container da aplicação (p.ex. `OTEL_SERVICE_NAME`, `OTEL_TRACES_EXPORTER`, `OTEL_EXPORTER_OTLP_ENDPOINT`).
+- **Teste funcional**: `GET /actuator/health` retornando **UP**.
+- **Verificação de traces**: spans visíveis no Jaeger após requisições HTTP nas rotas de *policy*.
+
+### Alterado
+- **Dockerfile** atualizado para copiar o agente do OpenTelemetry e ajustar permissões/execução (injeção via `-javaagent:`).
+- **docker-compose.yml** ajustado para rede/ports e *env vars* necessárias ao OTEL/Jaeger.
+
+### Testes
+- Validação do endpoint Actuator (`/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`).
+- Execução de fluxos de criação/consulta/cancelamento de *policy* e inspeção de **traces** no Jaeger (service, spans, latências).
+
+### Notas
+- Endpoints úteis: `/actuator`, `/actuator/health`, `/actuator/metrics`, `/actuator/prometheus`.
+- Para rodar local e inspecionar traces: `docker compose up -d` (com *jaeger* e *otel-collector*); acessar a UI do Jaeger e filtrar pelo `OTEL_SERVICE_NAME`.
+
 ## [0.7.0] - 2025-08-12
 ### Visão Geral
 Foco em **qualidade, validação** e **padronização de erros** via RFC 7807, além de uma **matriz de testes** mais robusta (unitários e de integração) com **gate de cobertura em 90%**.
