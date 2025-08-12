@@ -19,6 +19,9 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
+
+		<skipTests>false</skipTests>
+		<skipITs>false</skipITs>
 	</properties>
 	<dependencies>
 		<!-- Spring Boot -->
@@ -39,7 +42,7 @@
 		</dependency>
 		<!-- OpenFeign -->
 
-		<!-- DynamoDB -->
+		<!-- AWS -->
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb</artifactId>
@@ -52,29 +55,41 @@
 			<groupId>software.amazon.awssdk</groupId>
 			<artifactId>dynamodb-enhanced</artifactId>
 		</dependency>
-		<!-- DynamoDB -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sqs</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>url-connection-client</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- AWS -->
 
-		<!-- SQS -->
+		<!-- Spring Cloud AWS -->
 		<dependency>
 			<groupId>io.awspring.cloud</groupId>
 			<artifactId>spring-cloud-aws-starter-sqs</artifactId>
 			<version>3.4.0</version>
 		</dependency>
-		<!-- SQS -->
-
 		<dependency>
 			<groupId>io.awspring.cloud</groupId>
 			<artifactId>spring-cloud-aws-sqs</artifactId>
 			<version>3.4.0</version>
 		</dependency>
+		<!-- Spring Cloud AWS -->
 
-		<!-- Jackson (payload em JSON) -->
+		<!-- Jackson -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 			<version>2.19.2</version>
 		</dependency>
-		<!-- Jackson (payload em JSON) -->
+		<!-- Jackson -->
 
 		<!-- Lombok -->
 		<dependency>
@@ -93,12 +108,29 @@
 		</dependency>
 		<!-- Mapstruct -->
 
+		<!-- Instancio -->
+		<dependency>
+			<groupId>org.instancio</groupId>
+			<artifactId>instancio-junit</artifactId>
+			<version>5.5.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.instancio</groupId>
+			<artifactId>instancio-core</artifactId>
+			<version>5.5.0</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Instancio -->
+
+		<!-- Lombok Mapstruct Binding -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok-mapstruct-binding</artifactId>
 			<version>0.2.0</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- Lombok Mapstruct Binding -->
 
 		<!-- Tests -->
 		<dependency>
@@ -107,9 +139,52 @@
 			<scope>test</scope>
 		</dependency>
 		<!-- Tests -->
+
+		<!-- WireMock -->
+		<dependency>
+			<groupId>org.wiremock</groupId>
+			<artifactId>wiremock-jetty12</artifactId>
+			<version>3.13.1</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- WireMock -->
+
+		<!-- Testcontainers + LocalStack -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>localstack</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Testcontainers + LocalStack -->
+
+		<!-- Awaitility -->
+		<dependency>
+			<groupId>org.awaitility</groupId>
+			<artifactId>awaitility</artifactId>
+			<version>4.3.0</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Awaitility -->
+
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
+
+			<!-- Jetty -->
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-bom</artifactId>
+				<version>12.0.24</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- Jetty -->
+
 			<!-- AWS SDK V2 -->
 			<dependency>
 				<groupId>software.amazon.awssdk</groupId>
@@ -139,6 +214,16 @@
 				<scope>import</scope>
 			</dependency>
 			<!-- AWS Spring Cloud (SQS, e AWS SDK v2) -->
+
+			<!-- Testcontainers -->
+			<dependency>
+				<groupId>org.testcontainers</groupId>
+				<artifactId>testcontainers-bom</artifactId>
+				<version>1.21.3</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- Testcontainers -->
 		</dependencies>
 	</dependencyManagement>
 
@@ -153,10 +238,36 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.5.3</version>
 				<configuration>
+					<includes>
+						<include>**/*Test.java</include>
+					</includes>
+					<skipTests>${skipTests}</skipTests>
 					<systemPropertyVariables>
 						<spring.profiles.active>test</spring.profiles.active>
 					</systemPropertyVariables>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>3.5.3</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+						<configuration>
+							<includes>
+								<include>**/*IT.java</include>
+							</includes>
+							<skipITs>${skipITs}</skipITs>
+							<systemPropertyVariables>
+								<spring.profiles.active>test</spring.profiles.active>
+							</systemPropertyVariables>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -184,6 +295,43 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.13</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals><goal>prepare-agent</goal></goals>
+					</execution>
+
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals><goal>report</goal></goals>
+					</execution>
+
+					<execution>
+						<id>check</id>
+						<goals><goal>check</goal></goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>INSTRUCTION</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.90</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 
