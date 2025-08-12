@@ -9,6 +9,9 @@ spring:
   devtools:
     restart:
       enabled: false
+  mvc:
+    problemdetails:
+      enabled: true
 
   cloud:
     aws:
