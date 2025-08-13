@@ -78,7 +78,7 @@ curl -sS http://localhost:8080/policies/{id}
 
 3. Consultar por Customer ID
 ```bash
-curl -sS "http://localhost:8080/policies?customerId={uuid}"
+curl -sS "http://localhost:8080/policies?customerId={customer_id}"
 ```
 
 4. Consultar por Customer ID
@@ -86,7 +86,13 @@ curl -sS "http://localhost:8080/policies?customerId={uuid}"
 curl -sS -X PATCH http://localhost:8080/policies/{id}/cancel
 ```
 
-> Dica: você pode usar **Insomnia** ou **Postman** para inspecionar o contrato e salvar requests reutilizáveis.
+### Collection do Insomnia
+
+A coleção [acme-policy-service-collection.json](./docs/acme-policy-service-collection.json) está disponível no repositório e contém chamadas prontas para:
+- `POST /policies` (emissão)
+- `GET /policies/{id}` (consulta por id)
+- `GET /policies?customerId={customer_id}` (consulta por cliente)
+- `PATCH /policies/{id}/cancel` (cancelamento)
 
 ## Comportamento da Aplicação
 
