@@ -1,221 +1,165 @@
-# Desafio Seguradora ACME
+# ACME Policy Service - Desafio Seguradora
 
-Este repositório contém o código do projeto desenvolvido para o desafio **Seguradora ACME**. 
+Microsserviço orientado a eventos para gerenciar solicitações de apólice de seguros com integrações, regras de negócio e fluxo assíncrono (SQS). Foco em arquitetura limpa, testes e observabilidade (metrics, traces e logs).
 
-O objetivo deste desafio é criar um **microsserviço orientado a eventos** para gerenciar **solicitações de apólice de seguros**, integrando com **API de Fraudes**, aplicando **regras de negócio** e publicando **eventos de mudanças de estado**.
+## Jornada & Decisões
 
-## Tecnologias, Frameworks, Bibliotecas e Padrões Utilizados
-- **Java 17**
-- **Spring Boot 3.5.4**
-- **Spring Cloud OpenFeign** – Integração com APIs externas.
-- **WireMock** – Simulação de API de Fraudes com stubs e arquivos em `__files`.
-- **Jackson** – Serialização/deserialização JSON.
-- **Clean Architecture** – Organização de pacotes e separação de responsabilidades.
-- **Maven** – Gerenciamento de dependências e build.
-- **LocalStack** – Emulação local de serviços AWS (DynamoDB) para desenvolvimento e testes.
-- **AWS SDK v2 – DynamoDB Enhanced Client** – Persistência no DynamoDB.
-- **MapStruct** – Mapeamento entre o domínio e modelos de persistência.
-- **Lombok** – Redução de boilerplate com geração automática de getters/setters.
+A evolução foi organizada em releases curtas, cada uma com um tema principal. Em linhas gerais:
+**0.1.0**: API inicial (criação/consulta), contratos em records, validação básica, estrutura alinhada a Clean Architecture.
+**0.2.0**: Integração com **API de Fraudes via OpenFeign** e **WireMock** (stubs com response templating) para facilitar testes locais.
+**0.3.0**: Persistência no **DynamoDB** (AWS SDK v2 Enhanced Client), mapeamentos com **MapStruct**.
+**0.4.0**: Publicação de **eventos** (SQS) após persistência; formalização de regras de negócio com Domain Events.
+**0.5.0**: **Consumers** de resultados (pagamento e subscrição), combinação de marcadores para aprovação automática; histórico/estado robustos.
+**0.6.0**: **Ports & UseCases** consolidados (Hexagonal), **máquina de estados** explícita, endpoints REST lapidados (201+Location; 204 No Content), **InMemoryCorrelationStore**.
+**0.7.0**: **Validações** monetárias (`@Positive`, `@Digits`), padronização de erros com **RFC 7807/ProblemDetail**, exceções 404/409, **gate de cobertura 90% (JaCoCo)**.
+**0.8.0**: **Observabilidade ponta a ponta** — Actuator/Micrometer/Prometheus, **OpenTelemetry** (agent + collector) e **Jaeger** para traces; configuração de logs com `logback-spring.xml`.
 
-## Funcionalidades
-- Criar solicitação de apólice (`POST /policies`)
-- Consultar apólice por ID (`GET /policies/{id}`)
-- Consultar apólices por Customer ID (`GET /policies?customerId=...`)
-- Realizar análise de fraude durante a criação da apólice (simulada com WireMock)
-- Persistência de apólices no Amazon DynamoDB.
-- Consulta de apólices usando índice secundário global (`GSI`).
+## Tecnologias por Release
+| Release   | Foco                       | Principais tecnologias e padrões                                                                                      |
+|-----------|----------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| **0.1.0** | API base                   | Java 17, Spring Boot, Records/DTOs, Validation, Clean Architecture                                                    |
+| **0.2.0** | Fraudes                    | OpenFeign, WireMock (mappings/`__files`, response template), timeouts/config em `application.yml`                     |
+| **0.3.0** | Persistência               | AWS SDK v2 DynamoDB Enhanced, MapStruct, LocalStack                                                                   |
+| **0.4.0** | Eventos                    | SQS (publisher), Domain Events, logs estruturados                                                                     |
+| **0.5.0** | Consumers                  | `PaymentResultsConsumer`, `SubscriptionResultsConsumer`, marcadores/history, aprovação automática                     |
+| **0.6.0** | Design/Qualidade           | Ports/UseCases, `PolicyStateMachine` + `PolicyStatus` (enum), 201+Location, 204 No Content, correlation store, testes |
+| **0.7.0** | Padronização de erros & QA | `@Positive`/`@Digits`, `ProblemDetail` (RFC 7807), exceções 404/409, Surefire/Failsafe, JaCoCo (≥90%)                 |
+| **0.8.0** | Observabilidade            | Actuator + Micrometer Prometheus, OpenTelemetry (agent + collector), Jaeger, `logback-spring.xml`                     |
 
-## Estrutura do Projeto
-
-O projeto está organizado da seguinte forma:
-
-- **src/main/java** - Código-fonte da aplicação.
-- **src/test/java** - Testes unitários e de integração.
-- **src/main/resources** - Arquivos de configuração (por exemplo, `application.properties` ou `application.yml`).
-- **infra/dynamodb** – Contém a implementação de repositório (`PolicyDynamoRepository`) e o modelo de persistência (`PolicyItem`).
-- **infra/dynamodb/mapper** – Contém o `PolicyItemMapper` (MapStruct) para conversão de objetos.
-
-## Como Rodar o Projeto
-
-Para rodar a aplicação localmente, siga os seguintes passos:
+## Como Executar
 
 ### Requisitos
+- Java 17, Docker, Docker Compose, Maven.
 
-- **Java 17** - Certifique-se de que o Java está instalado em sua máquina.
-- **Maven** - Ferramentas de gerenciamento de dependências e build.
-
-### Passos
-
-1. Clone o repositório:
+### Subir infraestrutura
 ```bash
-git clone https://github.com/caaiobomfim/acme-policy-service.git
+docker compose up -d --build
+# Dica: aguarde alguns segundos para Jaeger/Collector/LocalStack ficarem up
 ```
 
-2. Navegue até o diretório do projeto:
+### Build, testes e cobertura
 ```bash
-cd acme-policy-service
+mvn clean verify
+# Relatório JaCoCo: target/site/jacoco/index.html
 ```
 
-3. Suba o ambiente de mock de fraudes e localstack:
+### Rodar a aplicação
+Você pode executar via Maven ou Docker (dependendo de como o compose está configurado):
 ```bash
-docker compose up -d
-```
-
-4. Compile e execute o projeto:
-```bash
-mvn clean install
+# via Maven (perfil de testes já configurado no surefire)
 mvn spring-boot:run
+
+# ou usando a imagem gerada pelo compose (se aplicável)
+docker compose ps
 ```
 
-A aplicação estará disponível em `http://localhost:8080` e o mock de fraudes em `http://localhost:8089/v1/fraud_analysis`.
-
-### Como Testar
-Descreva como rodar os testes do projeto.
-
-1. Execute os testes unitários:
+## Como Usar (passo a passo)
+1. Emitir solicitação
 ```bash
-mvn test
+curl -sS -X POST http://localhost:8080/policies \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "customer_id": "adc56d77-348c-4bf0-908f-22d40e2e715c",
+        "product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
+        "category": "AUTO",
+        "salesChannel": "MOBILE",
+        "paymentMethod": "CREDIT_CARD",
+        "total_monthly_premium_amount": 75.25,
+        "insured_amount": 275000.50,
+        "coverages": {"Roubo": 100000.25, "Perda Total": 100000.25, "Colisão com Terceiros": 75000.00},
+        "assistances": ["Guincho até 250km", "Troca de Óleo", "Chaveiro 24h"]
+      }'
 ```
 
-2. (Opcional) Se o projeto possui testes de integração, explique como executá-los.
-
-### Testes Manuais com Insomnia
-
-As três rotas implementadas nesta versão foram validadas manualmente utilizando o Insomnia.
-
-Endpoints testados:
-1. Criar solicitação (`POST /policies`)
-- Método: POST
-- URL: http://localhost:8080/policies
-- Body (JSON):
+2. Consultar por ID
 ```bash
-{
-	"customer_id": "adc56d77-348c-4bf0-908f-22d40e2e715c",
-	"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
-	"category": "AUTO",
-	"salesChannel": "MOBILE",
-	"paymentMethod": "CREDIT_CARD",
-	"total_monthly_premium_amount": 75.25,
-	"insured_amount": 275000.50,
-	"coverages": {
-		"Roubo": 100000.25,
-		"Perda Total": 100000.25,
-		"Colisão com Terceiros": 75000.00
-	},
-	"assistances": [
-		"Guincho até 250km",
-		"Troca de Óleo",
-		"Chaveiro 24h"
-	]
-}
+curl -sS http://localhost:8080/policies/{id}
 ```
 
-2. Consultar por ID (`GET /policies/{id}`)
-- Método: GET
-- URL: http://localhost:8080/policies/{id}
+3. Consultar por Customer ID
 ```bash
-{
-	"id": "00c67838-291a-4d77-8ec1-08523d1532d7",
-	"customer_id": "adc56d77-348c-4bf0-908f-22d40e2e715c",
-	"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
-	"category": "AUTO",
-	"salesChannel": "MOBILE",
-	"paymentMethod": "CREDIT_CARD",
-	"status": "RECEIVED",
-	"createdAt": "2025-08-08T22:27:05.109762-03:00",
-	"finishedAt": null,
-	"total_monthly_premium_amount": 75.25,
-	"insured_amount": 275000.50,
-	"coverages": {
-		"Roubo": 100000.25,
-		"Perda Total": 100000.25,
-		"Colisão com Terceiros": 75000.00
-	},
-	"assistances": [
-		"Guincho até 250km",
-		"Troca de Óleo",
-		"Chaveiro 24h"
-	],
-	"history": [
-		{
-			"status": "RECEIVED",
-			"timestamp": "2025-08-08T22:27:05.109762-03:00"
-		}
-	]
-}
+curl -sS "http://localhost:8080/policies?customerId={uuid}"
 ```
 
-3. Consultar por Customer ID (`GET /policies?customerId=`)
-- Método: GET
-- URL: http://localhost:8080/policies?customerId={uuid}
+4. Consultar por Customer ID
 ```bash
-[
-	{
-		"id": "01aa42cf-c920-4e77-a10e-8b4cece9e1c3",
-		"customer_id": "adc56d77-348c-4bf0-908f-22d40e2e715c",
-		"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
-		"category": "AUTO",
-		"salesChannel": "MOBILE",
-		"paymentMethod": "CREDIT_CARD",
-		"status": "RECEIVED",
-		"createdAt": "2025-08-08T22:26:28.7888718-03:00",
-		"finishedAt": null,
-		"total_monthly_premium_amount": 75.25,
-		"insured_amount": 275000.50,
-		"coverages": {
-			"Roubo": 100000.25,
-			"Perda Total": 100000.25,
-			"Colisão com Terceiros": 75000.00
-		},
-		"assistances": [
-			"Guincho até 250km",
-			"Troca de Óleo",
-			"Chaveiro 24h"
-		],
-		"history": [
-			{
-				"status": "RECEIVED",
-				"timestamp": "2025-08-08T22:26:28.7888718-03:00"
-			}
-		]
-	},
-	{
-		"id": "00c67838-291a-4d77-8ec1-08523d1532d7",
-		"customer_id": "adc56d77-348c-4bf0-908f-22d40e2e715c",
-		"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
-		"category": "AUTO",
-		"salesChannel": "MOBILE",
-		"paymentMethod": "CREDIT_CARD",
-		"status": "RECEIVED",
-		"createdAt": "2025-08-08T22:27:05.109762-03:00",
-		"finishedAt": null,
-		"total_monthly_premium_amount": 75.25,
-		"insured_amount": 275000.50,
-		"coverages": {
-			"Roubo": 100000.25,
-			"Perda Total": 100000.25,
-			"Colisão com Terceiros": 75000.00
-		},
-		"assistances": [
-			"Guincho até 250km",
-			"Troca de Óleo",
-			"Chaveiro 24h"
-		],
-		"history": [
-			{
-				"status": "RECEIVED",
-				"timestamp": "2025-08-08T22:27:05.109762-03:00"
-			}
-		]
-	}
-]
+curl -sS -X PATCH http://localhost:8080/policies/{id}/cancel
 ```
 
-#### Fraud API (mockada)
-- `GET /v1/fraud_analysis?orderId=123&customerId=456`
+> Dica: você pode usar **Insomnia** ou **Postman** para inspecionar o contrato e salvar requests reutilizáveis.
+
+## Comportamento da Aplicação
+
+- **API de Fraudes (WireMock)**: stubs com **response templating** permitem simular respostas variadas; opcionalmente, pode-se **randomizar a classificação de risco** para aproximar do mundo real (documente os templates usados).
+- **Regras de negócio**: a classificação recebida ativa **regras** que alteram o status da solicitação (e.g., `REJECTED`, `VALIDATED`/`PENDING`).
+- **Fluxo assíncrono (SQS)**: após validação, a solicitação pode ficar **PENDING** até que **pagamento** e **subscrição** retornem **APROVADOS** — combinação que leva a **APPROVED**; eventos contrários levam a **REJECTED**.
+- **Histórico e estado**: mudanças são registradas em histórico; estados finais encerram o ciclo.
+
+## Observabilidade
+- **Actuator**: `GET /actuator`, `GET /actuator/health`, `GET /actuator/metrics`, `GET /actuator/prometheus`.
+- **Traces (OpenTelemetry + Jaeger)**:
+  - O agente Java do OTel é injetado via `-javaagent:`;
+  - O **Collector** recebe/exporta via OTLP;
+  - A UI do **Jaeger** permite buscar pelo `OTEL_SERVICE_NAME` configurado.
+- **Logs**: `logback-spring.xml` define formato/níveis; parâmetros de log podem ser ajustados por pacote.
+> Dica: gere algumas requisições (POST/GET/PATCH) e observe os spans no Jaeger (latência, dependências, tags).
+
+## DynamoDB (LocalStack) & NoSQL Workbench
+- Listar tabelas (LocalStack):
+```bash
+awslocal dynamodb list-tables
+```
+
+- **Ver itens por chave** (ajuste `--table-name` e chaves conforme sua modelagem):
+```bash
+awslocal dynamodb get-item \
+  --table-name PolicyRequests \
+  --key '{"id":{"S":"<ID-DA-POLICY>"}}'
+```
+
+- **NoSQL Workbench**: aponte para `http://localhost:4566` (ou o endpoint LocalStack configurado) para inspecionar entidades e GSI.
+
+## Cenários de Teste (manuais)
+
+### Cenário A — REJECTED por regra de negócio
+1. Envie `POST /policies` com payload que viole os limites de aprovação para a classificação do cliente (simulada pelo WireMock).
+2. Verifique `status: REJECTED` ao consultar `GET /policies/{id}`.
+
+### Cenário B — PENDING → APPROVED via eventos
+1. Envie `POST /policies` e verifique `status: PENDING`.
+2. **Envie evento de pagamento aprovado** para a fila de pagamento.
+3. **Envie evento de subscrição autorizada** para a fila de subscrição.
+4. Consulte `GET /policies/{id}` e espere `status: APPROVED`.
+
+**Scripts de Mensageria (SQS/LocalStack)**
+
+Os scripts abaixo publicam eventos nas filas **payment-topic** e **insurance-subscriptions-topic** para **confirmar** ou **negar** as etapas do fluxo. Eles usam o endpoint do **LocalStack** e as configurações do projeto
+
+| Script                                 | Ação                     | Fila alvo (padrão)              | Observação                                               |
+|----------------------------------------|--------------------------|---------------------------------|----------------------------------------------------------|
+| `tools/send-payment-approved.sh`       | Confirma **pagamento**   | `payment-topic`                 | Define `status=APPROVED` para o `requestId` informado    |
+| `tools/send-payment-denied.sh`         | Nega **pagamento**       | `payment-topic`                 | Define `status=DENIED` para o `requestId` informado      |
+| `tools/send-subscription-approved.sh`  | Autoriza **subscrição**  | `insurance-subscriptions-topic` | Define `status=AUTHORIZED` para o `requestId` informado  |
+| `tools/send-subscription-denied.sh`    | Nega **subscrição**      | `insurance-subscriptions-topic` | Define `status=DENIED` para o `requestId` informado      |
+
+Uso rápido:
+
+```bash
+# Passe o ID da solicitação (requestId) via variável de ambiente
+REQUEST_ID=<UUID-DA-POLICY> sh tools/scripts/send-payment-approved.sh
+REQUEST_ID=<UUID-DA-POLICY> sh tools/scripts/send-payment-denied.sh
+REQUEST_ID=<UUID-DA-POLICY> sh tools/scripts/send-subscription-approved.sh
+REQUEST_ID=<UUID-DA-POLICY> sh tools/scripts/send-subscription-denied.sh
+```
+
+Exemplo:
+
+```bash
+REQUEST_ID=8d86546c-f580-40a9-ad2c-a6049b908f5b sh tools/scripts/send-payment-approved.sh
+```
 
 ### Histórico de mudanças
 Consulte o arquivo [CHANGELOG.md](./CHANGELOG.md) para ver as alterações de cada versão.
 
-## 📄 Desafio
-Para mais detalhes sobre o escopo e requisitos do desafio, consulte o arquivo [DESAFIO.md](./DESAFIO.md).
+## Escopo do Desafio
+Os requisitos e critérios de avaliação estão documentados no arquivo de [DESAFIO.md](./DESAFIO.md). Este README traz o racional das decisões e instruções para execução e validação da solução.
