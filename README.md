@@ -326,29 +326,29 @@ aws dynamodb get-item \
 
 ## Cenários de Teste (manuais)
 
-### Cenário A — REJECTED por regra de negócio
+### Cenário A - REJECTED por regra de negócio
 1. Envie `POST /policies` com payload que viole os limites de aprovação para a classificação do cliente (simulada pelo WireMock).
 2. Verifique `status: REJECTED` no retorno de `POST /policies` ou ao consultar `GET /policies/{id}`.
 
-### Cenário B — PENDING → VALIDATED → APPROVED via eventos
+### Cenário B - PENDING → VALIDATED → APPROVED via eventos
 1. Envie `POST /policies` e verifique `status: PENDING` (o `PENDING` é atribuído após `VALIDATED`, que ocorre após validação de fraudes).
 2. **Envie evento de pagamento aprovado** para a fila de pagamento (`payment-topic`).
 3. **Envie evento de subscrição autorizada** para a fila de subscrição (`insurance-subscriptions-topic`).
 4. Consulte `GET /policies/{id}` e espere `status: APPROVED`.
 
-### Cenário C — PENDING → REJECTED (pagamento negado)
+### Cenário C - PENDING → REJECTED (pagamento negado)
 1. Envie `POST /policies` e confirme `status: PENDING` na resposta.
 2. Confirme `PENDING` também em `GET /policies/{id}`.
 3. **Envie evento de pagamento negado** para `payment-topic`.
 4. Consulte `GET /policies/{id}` e espere `status: REJECTED`.
 
-### Cenário D — PENDING → REJECTED (subscrição negada)
+### Cenário D - PENDING → REJECTED (subscrição negada)
 1. Envie `POST /policies` e confirme `status: PENDING` na resposta.
 2. Confirme `PENDING` também em `GET /policies/{id}`.
 3. **Envie evento de subscrição negada** para `insurance-subscriptions-topic`.
 4. Consulte `GET /policies/{id}` e espere `status: REJECTED`.
 
-### Cenário D — PENDING → CANCELLED (cancelamento de solicitação)
+### Cenário D - PENDING → CANCELLED (cancelamento de solicitação)
 1. Envie `POST /policies` e confirme `status: PENDING` na resposta.
 2. Confirme `PENDING` também em `GET /policies/{id}`.
 3. Envie `PATCH /policies/{id}/cancel` para solicitação de cancelamento e espere um **204 No Content**.
