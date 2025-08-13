@@ -335,12 +335,12 @@ awslocal dynamodb get-item \
 
 Os scripts abaixo publicam eventos nas filas **payment-topic** e **insurance-subscriptions-topic** para **confirmar** ou **negar** as etapas do fluxo. Eles usam o endpoint do **LocalStack** e as configurações do projeto
 
-| Script                                 | Ação                     | Fila alvo (padrão)              | Observação                                               |
-|----------------------------------------|--------------------------|---------------------------------|----------------------------------------------------------|
-| `tools/send-payment-approved.sh`       | Confirma **pagamento**   | `payment-topic`                 | Define `status=APPROVED` para o `requestId` informado    |
-| `tools/send-payment-denied.sh`         | Nega **pagamento**       | `payment-topic`                 | Define `status=DENIED` para o `requestId` informado      |
-| `tools/send-subscription-approved.sh`  | Autoriza **subscrição**  | `insurance-subscriptions-topic` | Define `status=AUTHORIZED` para o `requestId` informado  |
-| `tools/send-subscription-denied.sh`    | Nega **subscrição**      | `insurance-subscriptions-topic` | Define `status=DENIED` para o `requestId` informado      |
+| Script                                 | Ação                     | Fila alvo (padrão)              | Observação                                             |
+|----------------------------------------|--------------------------|---------------------------------|--------------------------------------------------------|
+| `tools/send-payment-approved.sh`       | Confirma **pagamento**   | `payment-topic`                 | Envia `status=CONFIRMED` para o `requestId` informado  |
+| `tools/send-payment-denied.sh`         | Nega **pagamento**       | `payment-topic`                 | Envia `status=DENIED` para o `requestId` informado     |
+| `tools/send-subscription-approved.sh`  | Autoriza **subscrição**  | `insurance-subscriptions-topic` | Envia `status=AUTHORIZED` para o `requestId` informado |
+| `tools/send-subscription-denied.sh`    | Nega **subscrição**      | `insurance-subscriptions-topic` | Envia `status=DENIED` para o `requestId` informado     |
 
 Uso rápido:
 
