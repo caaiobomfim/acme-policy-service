@@ -310,14 +310,16 @@ Exemplo (200 OK):
 ## DynamoDB (LocalStack) & NoSQL Workbench
 - Listar tabelas (LocalStack):
 ```bash
-awslocal dynamodb list-tables
+aws dynamodb list-tables --region "us-east-1" --endpoint-url "http://sqs.us-east-1.localhost.localstack.cloud:4566"
 ```
 
 - **Ver itens por chave** (ajuste `--table-name` e chaves conforme sua modelagem):
 ```bash
-awslocal dynamodb get-item \
+aws dynamodb get-item \
   --table-name PolicyRequests \
-  --key '{"id":{"S":"<ID-DA-POLICY>"}}'
+  --key '{"policyId":{"S":"<ID-DA-POLICY>"}}' \
+  --region "us-east-1" \
+  --endpoint-url "http://sqs.us-east-1.localhost.localstack.cloud:4566"
 ```
 
 - **NoSQL Workbench**: aponte para `http://localhost:4566` (ou o endpoint LocalStack configurado) para inspecionar entidades e GSI.
