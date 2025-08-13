@@ -26,6 +26,33 @@ A evolução foi organizada em releases curtas, cada uma com um tema principal. 
 | **0.7.0** | Padronização de erros & QA | `@Positive`/`@Digits`, `ProblemDetail` (RFC 7807), exceções 404/409, Surefire/Failsafe, JaCoCo (≥90%)                 |
 | **0.8.0** | Observabilidade            | Actuator + Micrometer Prometheus, OpenTelemetry (agent + collector), Jaeger, `logback-spring.xml`                     |
 
+## Detalhes sobre a Solução
+Esta solução foi planejada em **releases incrementais**, cada uma reduzindo risco e agregando uma capacidade específica. O racional por trás das decisões principais:
+- **Arquitetura (Clean/Hexagonal + Use Cases/Ports & Adapters)**: separar web (controllers), aplicação (use cases/queries) e domínio permite testar regras sem infraestrutura e trocar implementações (ex.: fraudes, persistência) sem afetar o núcleo.
+- **Máquina de estados (State Pattern)**: centraliza as transições válidas de `Policy`, evitando "stringly-typed" e impedindo mudanças ilegais. O estado guia o fluxo assíncrono e os retornos HTTP.
+- **Integrações:**
+  - **Fraudes** via **OpenFeign** por simplicidade de cliente HTTP e integração com Spring; **WireMock** para stubs e cenários dinâmicos (classificação aleatória), aproximando do mundo real.
+  - **Mensageria** com **SQS** (LocalStack) para modelar **eventos externos** de pagamento e subscrição, com publish/consume desacoplado.
+  - **Persistência** com **DynamoDB** (AWS SDK v2 Enhanced): escolhido pela familiaridade e por encaixar bem no fluxo orientado a eventos; **MapStruct** reduz boilerplate de conversões; índices (ex.: GSI por `customerId`) habilitam consultas.
+- **Testes**: unidade com **JUnit5/Mockito/AssertJ** e integração com **Testcontainers** + **LocalStack** + **WireMock**; **JaCoCo (≥90%)** como guard-rail de qualidade. O foco dos ITs são caminhos E2E (Dynamo, publishers/consumers).
+- **Observabilidade**: **Actuator/Micrometer/Prometheus** para métricas; **OpenTelemetry (agent + collector)** para traces e **Jaeger** na visualização; **logback-spring.xml** para logs estruturados.
+
+## Premissas & Decisões Assumidas
+Quando o enunciado não especificou detalhes, adotei premissas explícitas para tornar o sistema consistente e testável:
+- **Contratos de eventos**
+  - `payments-topic`: `status ∈ { CONFIRMED, DENIED }` com `requestId`, `paymentId`, `occurredAt`.
+  - `insurance-subscriptions-topic`: `status ∈ { AUTHORIZED, DENIED }` com `requestId`, `occurredAt`.
+  - **Regra de composição**: `CONFIRMED + AUTHORIZED → Policy.APPROVED`; qualquer `DENIED → Policy.REJECTED`; ausência de um dos eventos → `Policy.PENDING`.
+- **Fraudes**: a API de fraudes (WireMock) **pode responder classificação aleatória**; isso exercita regras de negócio e evita acoplamento a fixtures estáticos.
+- **Cancelamento**: modelado como **atualização parcial** do recurso (HTTP **PATCH**), retornando `204 No Content`. A operação é **idempotente**: políticas já `CANCELLED` não geram erro.
+- **Ordem e duplicidade de eventos**: consumidores tratam **chegada fora de ordem e reprocessamentos**. Foi adotado correlation store em memória para compor sinais antes de persistir o resultado.
+- **Modelo de dados**: chave principal por `id`, **GSI** por `customerId` para consultas; sem schema enforcement rígido além das validações da aplicação.
+- **Erros para clientes**: respostas seguem **RFC 7807** com mensagens **neutras** (sem vazar detalhes de upstream); detalhes completos ficam nos logs/traces.
+- **Timeouts e resiliência**: tempos de `connect/read` configurados no perfil de teste; retries foram mantidos mínimos para evitar falsos positivos nos ITs.
+- **Escopo do desafio**: autenticação/autorização, políticas de segurança, secrets management e hardening não foram aprofundados; foco em domínio, qualidade e observabilidade local.
+
+> **Trade-offs**: escolhi Feign pela produtividade, ciente de que RestClient (Spring 6) reduziria dependências; usei **LocalStack/WireMock** para realismo local sabendo que não cobrem 100% do comportamento de produção. A composição de eventos via store em memória simplifica o estudo, mas em produção seria substituída por armazenamento durável (ex.: Redis).
+
 ## Como Executar
 
 ### Requisitos
