@@ -37,7 +37,7 @@ docker compose up -d --build
 # Dica: aguarde alguns segundos para Jaeger/Collector/LocalStack ficarem up
 ```
 
-### Build, testes e cobertura
+### Build, testes e cobertura (Unit + Integration)
 ```bash
 mvn clean verify
 # Relatório JaCoCo: target/site/jacoco/index.html
