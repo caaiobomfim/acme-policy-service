@@ -5,14 +5,14 @@ Microsserviço orientado a eventos para gerenciar solicitações de apólice de 
 ## Jornada & Decisões
 
 A evolução foi organizada em releases curtas, cada uma com um tema principal. Em linhas gerais:
-**0.1.0**: API inicial (criação/consulta), contratos em records, validação básica, estrutura alinhada a Clean Architecture.
-**0.2.0**: Integração com **API de Fraudes via OpenFeign** e **WireMock** (stubs com response templating) para facilitar testes locais.
-**0.3.0**: Persistência no **DynamoDB** (AWS SDK v2 Enhanced Client), mapeamentos com **MapStruct**.
-**0.4.0**: Publicação de **eventos** (SQS) após persistência; formalização de regras de negócio com Domain Events.
-**0.5.0**: **Consumers** de resultados (pagamento e subscrição), combinação de marcadores para aprovação automática; histórico/estado robustos.
-**0.6.0**: **Ports & UseCases** consolidados (Hexagonal), **máquina de estados** explícita, endpoints REST lapidados (201+Location; 204 No Content), **InMemoryCorrelationStore**.
-**0.7.0**: **Validações** monetárias (`@Positive`, `@Digits`), padronização de erros com **RFC 7807/ProblemDetail**, exceções 404/409, **gate de cobertura 90% (JaCoCo)**.
-**0.8.0**: **Observabilidade ponta a ponta** — Actuator/Micrometer/Prometheus, **OpenTelemetry** (agent + collector) e **Jaeger** para traces; configuração de logs com `logback-spring.xml`.
+- **0.1.0**: API inicial (criação/consulta), contratos em records, validação básica, estrutura alinhada a Clean Architecture.
+- **0.2.0**: Integração com **API de Fraudes via OpenFeign** e **WireMock** (stubs com response templating) para facilitar testes locais.
+- **0.3.0**: Persistência no **DynamoDB** (AWS SDK v2 Enhanced Client), mapeamentos com **MapStruct**.
+- **0.4.0**: Publicação de **eventos** (SQS) após persistência; formalização de regras de negócio com Domain Events.
+- **0.5.0**: **Consumers** de resultados (pagamento e subscrição), combinação de marcadores para aprovação automática; histórico/estado robustos.
+- **0.6.0**: **Ports & UseCases** consolidados (Hexagonal), **máquina de estados** explícita, endpoints REST lapidados (201+Location; 204 No Content), **InMemoryCorrelationStore**.
+- **0.7.0**: **Validações** monetárias (`@Positive`, `@Digits`), padronização de erros com **RFC 7807/ProblemDetail**, exceções 404/409, **gate de cobertura 90% (JaCoCo)**.
+- **0.8.0**: **Observabilidade ponta a ponta** — Actuator/Micrometer/Prometheus, **OpenTelemetry** (agent + collector) e **Jaeger** para traces; configuração de logs com `logback-spring.xml`.
 
 ## Tecnologias por Release
 | Release   | Foco                       | Principais tecnologias e padrões                                                                                      |
