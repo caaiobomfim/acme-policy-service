@@ -43,16 +43,6 @@ mvn clean verify
 # Relatório JaCoCo: target/site/jacoco/index.html
 ```
 
-### Rodar a aplicação
-Você pode executar via Maven ou Docker (dependendo de como o compose está configurado):
-```bash
-# via Maven (perfil de testes já configurado no surefire)
-mvn spring-boot:run
-
-# ou usando a imagem gerada pelo compose (se aplicável)
-docker compose ps
-```
-
 ## Como Usar (passo a passo)
 1. **Emitir solicitação**
 ```bash
