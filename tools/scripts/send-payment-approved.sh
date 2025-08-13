@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REQUEST_ID="8d86546c-f580-40a9-ad2c-a6049b908f5b"
-PAYMENT_ID="16ba8cb6-4da9-40e2-b71f-e99fd4873a2a"
+: "${REQUEST_ID:?Informe REQUEST_ID=<uuid> antes de executar}"
+PAYMENT_ID="${PAYMENT_ID:-$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid 2>/dev/null || echo '00000000-0000-0000-0000-000000000000')}"
 OCCURRED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 REGION="us-east-1"

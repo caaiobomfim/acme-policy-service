@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REQUEST_ID="65a2821b-442e-47e2-ad53-9a72c3d738ac"
+: "${REQUEST_ID:?Informe REQUEST_ID=<uuid> antes de executar}"
 OCCURRED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 REGION="us-east-1"
