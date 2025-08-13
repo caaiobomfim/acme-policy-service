@@ -294,6 +294,19 @@ A coleção [acme-policy-service-collection.json](./docs/acme-policy-service-col
 - **Logs**: `logback-spring.xml` define formato/níveis; parâmetros de log podem ser ajustados por pacote.
 > Dica: gere algumas requisições (POST/GET/PATCH) e observe os spans no Jaeger (latência, dependências, tags).
 
+### Teste rápido — Actuator Health
+```bash
+curl -i http://localhost:8080/actuator/health
+```
+
+Exemplo (200 OK):
+
+```bash
+{
+  "status": "UP"
+}
+```
+
 ## DynamoDB (LocalStack) & NoSQL Workbench
 - Listar tabelas (LocalStack):
 ```bash
