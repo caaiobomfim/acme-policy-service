@@ -54,40 +54,235 @@ docker compose ps
 ```
 
 ## Como Usar (passo a passo)
-1. Emitir solicitação
+1. **Emitir solicitação**
 ```bash
 curl -sS -X POST http://localhost:8080/policies \
   -H 'Content-Type: application/json' \
   -d '{
-        "customer_id": "adc56d77-348c-4bf0-908f-22d40e2e715c",
-        "product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
-        "category": "AUTO",
-        "salesChannel": "MOBILE",
-        "paymentMethod": "CREDIT_CARD",
-        "total_monthly_premium_amount": 75.25,
-        "insured_amount": 275000.50,
-        "coverages": {"Roubo": 100000.25, "Perda Total": 100000.25, "Colisão com Terceiros": 75000.00},
-        "assistances": ["Guincho até 250km", "Troca de Óleo", "Chaveiro 24h"]
-      }'
+	"customer_id": "8d86546c-f580-40a9-ad2c-a6049b908f5b",
+	"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
+	"category": "AUTO",
+	"salesChannel": "MOBILE",
+	"paymentMethod": "CREDIT_CARD",
+	"total_monthly_premium_amount": 75.25,
+	"insured_amount": 275000.50,
+	"coverages": {
+		"Roubo": 100000.25,
+		"Perda Total": 100000.25,
+		"Colisão com Terceiros": 75000.00
+	},
+	"assistances": [
+		"Guincho até 250km",
+		"Troca de Óleo",
+		"Chaveiro 24h"
+	]
+}'
 ```
 
-2. Consultar por ID
+Exemplo (200 OK):
+
+```bash
+{
+	"id": "33b6db63-064b-4e8e-a918-ddbdb1a72e07",
+	"customer_id": "8d86546c-f580-40a9-ad2c-a6049b908f5b",
+	"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
+	"category": "AUTO",
+	"salesChannel": "MOBILE",
+	"paymentMethod": "CREDIT_CARD",
+	"status": "PENDING",
+	"createdAt": "2025-08-13T00:54:11.566335758Z",
+	"finishedAt": null,
+	"total_monthly_premium_amount": 75.25,
+	"insured_amount": 275000.50,
+	"coverages": {
+		"Roubo": 100000.25,
+		"Perda Total": 100000.25,
+		"Colisão com Terceiros": 75000.00
+	},
+	"assistances": [
+		"Guincho até 250km",
+		"Troca de Óleo",
+		"Chaveiro 24h"
+	],
+	"history": [
+		{
+			"status": "RECEIVED",
+			"timestamp": "2025-08-13T00:54:11.566335758Z"
+		},
+		{
+			"status": "VALIDATED",
+			"timestamp": "2025-08-13T00:54:11.622899456Z"
+		},
+		{
+			"status": "PENDING",
+			"timestamp": "2025-08-13T00:54:11.658210003Z"
+		}
+	]
+}
+```
+
+2. **Consultar por ID**
 ```bash
 curl -sS http://localhost:8080/policies/{id}
 ```
 
-3. Consultar por Customer ID
+Exemplo (200 OK):
+
+```bash
+{
+	"id": "33b6db63-064b-4e8e-a918-ddbdb1a72e07",
+	"customer_id": "8d86546c-f580-40a9-ad2c-a6049b908f5b",
+	"product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
+	"category": "AUTO",
+	"salesChannel": "MOBILE",
+	"paymentMethod": "CREDIT_CARD",
+	"status": "PENDING",
+	"createdAt": "2025-08-13T00:54:11.566335758Z",
+	"finishedAt": null,
+	"total_monthly_premium_amount": 75.25,
+	"insured_amount": 275000.50,
+	"coverages": {
+		"Roubo": 100000.25,
+		"Perda Total": 100000.25,
+		"Colisão com Terceiros": 75000.00
+	},
+	"assistances": [
+		"Guincho até 250km",
+		"Troca de Óleo",
+		"Chaveiro 24h"
+	],
+	"history": [
+		{
+			"status": "RECEIVED",
+			"timestamp": "2025-08-13T00:54:11.566335758Z"
+		},
+		{
+			"status": "VALIDATED",
+			"timestamp": "2025-08-13T00:54:11.622899456Z"
+		},
+		{
+			"status": "PENDING",
+			"timestamp": "2025-08-13T00:54:11.658210003Z"
+		}
+	]
+}
+```
+
+Exemplo (404 Not Found — RFC 7807):
+
+```bash
+{
+	"type": "https://api.acme.com/errors/policy-not-found",
+	"title": "Not Found",
+	"status": 404,
+	"detail": "Policy not found",
+	"instance": "/policies/1b60970b-006d-4581-9b42-059085341f68",
+	"policyId": "1b60970b-006d-4581-9b42-059085341f68",
+	"timestamp": "2025-08-13T00:56:22.981708770Z"
+}
+```
+
+3. **Consultar por Customer ID**
 ```bash
 curl -sS "http://localhost:8080/policies?customerId={customer_id}"
 ```
 
-4. Consultar por Customer ID
+Exemplo (200 OK):
+
+```bash
+[
+    {
+        "id": "33b6db63-064b-4e8e-a918-ddbdb1a72e07",
+        "customer_id": "8d86546c-f580-40a9-ad2c-a6049b908f5b",
+        "product_id": "1b2da7cc-b367-4196-8a78-9cfeec21f587",
+        "category": "AUTO",
+        "salesChannel": "MOBILE",
+        "paymentMethod": "CREDIT_CARD",
+        "status": "PENDING",
+        "createdAt": "2025-08-13T00:54:11.566335758Z",
+        "finishedAt": null,
+        "total_monthly_premium_amount": 75.25,
+        "insured_amount": 275000.50,
+        "coverages": {
+            "Roubo": 100000.25,
+            "Perda Total": 100000.25,
+            "Colisão com Terceiros": 75000.00
+        },
+        "assistances": [
+            "Guincho até 250km",
+            "Troca de Óleo",
+            "Chaveiro 24h"
+        ],
+        "history": [
+            {
+                "status": "RECEIVED",
+                "timestamp": "2025-08-13T00:54:11.566335758Z"
+            },
+            {
+                "status": "VALIDATED",
+                "timestamp": "2025-08-13T00:54:11.622899456Z"
+            },
+            {
+                "status": "PENDING",
+                "timestamp": "2025-08-13T00:54:11.658210003Z"
+            }
+        ]
+    }
+]
+```
+
+Exemplo (404 Not Found — RFC 7807):
+
+```bash
+{
+	"type": "https://api.acme.com/errors/customer-policies-not-found",
+	"title": "Not Found",
+	"status": 404,
+	"detail": "No policy was found for this customer",
+	"instance": "/policies",
+	"customerId": "8d86546c-f580-40a9-ad2c-a6049b908f5b",
+	"timestamp": "2025-08-12T20:23:28.742279807Z"
+}
+```
+
+4. **Cancelar por ID**
 ```bash
 curl -sS -X PATCH http://localhost:8080/policies/{id}/cancel
 ```
 
-### Collection do Insomnia
+Exemplo (204 No Content):
+```bash
+HTTP/1.1 204 No Content
+```
 
+Exemplo (404 Not Found — RFC 7807):
+```bash
+{
+	"type": "https://api.acme.com/errors/policy-not-found",
+	"title": "Not Found",
+	"status": 404,
+	"detail": "Policy not found",
+	"instance": "/policies/48ffd5c1-4f9d-4bcc-9111-83bd49814c07/cancel",
+	"policyId": "48ffd5c1-4f9d-4bcc-9111-83bd49814c07",
+	"timestamp": "2025-08-12T20:23:43.884029791Z"
+}
+```
+
+Exemplo (409 Conflict — RFC 7807):
+```bash
+{
+	"type": "https://api.acme.com/errors/policy-cancel-conflict",
+	"title": "Policy cancel conflict",
+	"status": 409,
+	"detail": "It is not possible to cancel a policy with a final status: CANCELLED",
+	"instance": "/policies/9a87aba6-ec14-4429-8286-d4d70402acc6/cancel",
+	"policyId": "9a87aba6-ec14-4429-8286-d4d70402acc6",
+	"currentStatus": "CANCELLED",
+	"timestamp": "2025-08-13T01:00:32.054432082Z"
+}
+```
+
+### Collection do Insomnia
 A coleção [acme-policy-service-collection.json](./docs/acme-policy-service-collection.json) está disponível no repositório e contém chamadas prontas para:
 - `POST /policies` (emissão)
 - `GET /policies/{id}` (consulta por id)
@@ -95,7 +290,6 @@ A coleção [acme-policy-service-collection.json](./docs/acme-policy-service-col
 - `PATCH /policies/{id}/cancel` (cancelamento)
 
 ## Comportamento da Aplicação
-
 - **API de Fraudes (WireMock)**: stubs com **response templating** permitem simular respostas variadas; opcionalmente, pode-se **randomizar a classificação de risco** para aproximar do mundo real (documente os templates usados).
 - **Regras de negócio**: a classificação recebida ativa **regras** que alteram o status da solicitação (e.g., `REJECTED`, `VALIDATED`/`PENDING`).
 - **Fluxo assíncrono (SQS)**: após validação, a solicitação pode ficar **PENDING** até que **pagamento** e **subscrição** retornem **APROVADOS** — combinação que leva a **APPROVED**; eventos contrários levam a **REJECTED**.
